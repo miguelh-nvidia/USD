@@ -626,6 +626,10 @@ public:
     USDGEOM_API
     size_t GetFaceCount(UsdTimeCode timeCode = UsdTimeCode::Default()) const;
 
+
+    // TODO:
+    USDGEOM_API
+    bool FanTriangulate();
 };
 
 PXR_NAMESPACE_CLOSE_SCOPE

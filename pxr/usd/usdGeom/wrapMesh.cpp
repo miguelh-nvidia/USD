@@ -310,6 +310,7 @@ WRAP_CUSTOM {
               arg("numPoints")))
         .def("GetFaceCount", &UsdGeomMesh::GetFaceCount,
             arg("timeCode")=UsdTimeCode::Default()) 
+        .def("FanTriangulate", &UsdGeomMesh::FanTriangulate)
         .staticmethod("ValidateTopology");
 
     _class.attr("SHARPNESS_INFINITE") = UsdGeomMesh::SHARPNESS_INFINITE;
