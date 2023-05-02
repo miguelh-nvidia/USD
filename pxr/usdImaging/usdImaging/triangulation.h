@@ -1,7 +1,8 @@
-#ifndef PXR_USD_USD_GEOM_TRIANGULATION_H
-#define PXR_USD_USD_GEOM_TRIANGULATION_H
+#ifndef PXR_USD_IMAGING_USD_IMAGING_TRIANGULATION_H
+#define PXR_USD_IMAGING_USD_IMAGING_TRIANGULATION_H
 
 #include "pxr/pxr.h"
+#include "pxr/usdImaging/usdImaging/api.h"
 
 #include "pxr/base/vt/array.h"
 #include "pxr/base/gf/vec3f.h"
@@ -105,25 +106,22 @@ private:
 class Triangulation
 {
 public:
-    USDGEOM_API
+    USDIMAGING_API
     Triangulation(
         const VtVec3fArray& points,
         const VtIntArray& indices,
         const VtIntArray& vertexCount);
 
-    USDGEOM_API
+    USDIMAGING_API
     bool Triangulate();
 
-    USDGEOM_API
+    USDIMAGING_API
     void GetIndices(const VtIntArray& inIndices, VtIntArray& outIndices) const;
 
-    USDGEOM_API
-    void GetIndices(VtIntArray& outIndices) const
-    {
-        GetIndices(_indices, outIndices);
-    }
+    USDIMAGING_API
+    void GetIndices(VtIntArray& outIndices) const;
 
-    USDGEOM_API
+    USDIMAGING_API
     void GetVertexCounts(VtIntArray& vertexCounts) const;
 private:
     const VtVec3fArray _points;
@@ -150,4 +148,4 @@ private:
 
 PXR_NAMESPACE_CLOSE_SCOPE
 
-#endif // USD_TRIANGULATION_H
+#endif // PXR_USD_IMAGING_USD_IMAGING_TRIANGULATION_H

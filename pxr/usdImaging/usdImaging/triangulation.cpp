@@ -1,5 +1,5 @@
 #include "pxr/pxr.h"
-#include "pxr/usd/usdGeom/triangulation.h"
+#include "pxr/usdImaging/usdImaging/triangulation.h"
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -32,14 +32,6 @@ FacePoint::HasSameOrientation(const FacePoint& other) const
         return false;
     }
     return true;
-}
-
-bool
-FacePoint::IsVisible(const GfVec3f& s) const
-{
-    return
-        GfDot(GfCross(_p - _q, s - _q), _direction) >= 0 &&
-        GfDot(GfCross(s - _q, _r - _q), _direction) >= 0;
 }
 
 bool
@@ -151,7 +143,7 @@ Face::IsStarShaped(const FacePoint& reference, size_t& index) const
 }
 
 bool
-Face::IsEarClipping(const FacePoint& reference, VtIntArray& indices, VtIntArray& faceCount) const
+Face::IsEarClipping(const FacePoint& reference, VtIntArray& perm, VtIntArray& faceCount) const
 {
     // Create a double linked list
     std::vector<size_t> prevIndex(size(), 0);
@@ -220,9 +212,9 @@ Face::IsEarClipping(const FacePoint& reference, VtIntArray& indices, VtIntArray&
         const size_t i = *it;
 
         // The following lines is a way to merge triangles into polygons
-        indices.push_back(prevIndex[i]);
-        indices.push_back(i);
-        indices.push_back(nextIndex[i]);
+        perm.push_back(prevIndex[i]);
+        perm.push_back(i);
+        perm.push_back(nextIndex[i]);
         faceCount.push_back(3);
         ++earCounter;
 
@@ -278,15 +270,17 @@ Face::IsEarClipping(const FacePoint& reference, VtIntArray& indices, VtIntArray&
 }
 
 bool
-Face::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
+Face::Triangulate(VtIntArray& outPerm, VtIntArray& outFaces) const
 {
     if (!IsValid())
     {
         // Invalid geometry will be later discarded
         // There is no modification to indices
         for (size_t i = 0; i < size(); ++i)
-            Add(indices, i);
-        faces.push_back(size());
+        {
+            outPerm.push_back(_indexStart + i);
+        }
+        outFaces.push_back(size());
         return true;
     }
 
@@ -295,8 +289,10 @@ Face::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
         // Convex shapes can always fan triangulate
         // There is no modification to indices
         for (size_t i = 0; i < size(); ++i)
-            Add(indices, i);
-        faces.push_back(size());
+        {
+            outPerm.push_back(_indexStart + i);
+        }
+        outFaces.push_back(size());
         return true;
     }
 
@@ -310,20 +306,26 @@ Face::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
         // Star shapes can always fan triangulate
         // Indices may need to shift.
         for (size_t i = 0; i < size(); ++i)
-            Add(indices, (visibleIndex + i) % size());
-        faces.push_back(size());
+        {
+            outPerm.push_back(_indexStart + (visibleIndex + i) % size());
+        }
+        outFaces.push_back(size());
         return true;
     }
 
-    VtIntArray tmpIndices;
+    VtIntArray tmpPerm;
     VtIntArray tmpFaceCount;
-    if (IsEarClipping(reference, tmpIndices, tmpFaceCount))
+    if (IsEarClipping(reference, tmpPerm, tmpFaceCount))
     {
         // Is ear clipping should work
-        for (size_t i = 0; i < tmpIndices.size(); ++i)
-            Add(indices, tmpIndices[i]);
+        for (size_t i = 0; i < tmpPerm.size(); ++i)
+        {
+            outPerm.push_back(_indexStart + tmpPerm[i]);
+        }
         for (size_t i = 0; i < tmpFaceCount.size(); ++i)
-            faces.push_back(tmpFaceCount[i]);
+        {
+            outFaces.push_back(tmpFaceCount[i]);
+        }
         return true;
     }
 
@@ -333,31 +335,67 @@ Face::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
 
 // Triangulation
 
-Triangulation::Triangulation(const VtVec3fArray& points,
+Triangulation::Triangulation(
+    const VtVec3fArray& points,
     const VtIntArray& indices,
     const VtIntArray& vertexCount) :
     _points(points),
     _indices(indices),
-    _vertexCount(vertexCount)
+    _vertexCount(vertexCount),
+    _outPerm(),
+    _outVertexCount()
 {
 }
 
 bool
-Triangulation::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
+Triangulation::Triangulate()
 {
+    bool flag = true;
     size_t indexStart = 0;
     for (size_t i = 0; i < _vertexCount.size(); ++i)
     {
-        int numberOfVertices = _vertexCount[i];
+        int const numberOfVertices = _vertexCount[i];
 
         Face const face(_points, _indices, indexStart, numberOfVertices);
+        flag &= face.Triangulate(_outPerm, _outVertexCount);
+
         indexStart += numberOfVertices;
-        if (!face.FanTriangulate(indices, faces))
+    }
+    return flag;
+}
+
+void
+Triangulation::GetIndices(const VtIntArray& inIndices, VtIntArray& outIndices) const
+{
+    size_t index = 0;
+    for (size_t i = 0; i < _outVertexCount.size(); ++i)
+    {
+        int const numberOfVertices = _outVertexCount[i];
+
+        for (size_t j = 0; j < numberOfVertices; ++j)
         {
-            return false;
+            outIndices.push_back(inIndices[_outPerm[index]]);
+            ++index;
         }
     }
-    return true;
+}
+
+void
+Triangulation::GetIndices(VtIntArray& outIndices) const
+{
+    GetIndices(_indices, outIndices);
+}
+
+
+void
+Triangulation::GetVertexCounts(VtIntArray& vertexCounts) const
+{
+    for (size_t i = 0; i < _outVertexCount.size(); ++i)
+    {
+        int const numberOfVertices = _outVertexCount[i];
+
+        vertexCounts.push_back(numberOfVertices);
+    }
 }
 
 // FanTriangulation
@@ -382,10 +420,14 @@ FanTriangulation::FanTriangulate(const UsdTimeCode& timeCode)
     vertexCountAttr.Get(&vertexCount, timeCode);
 
     Triangulation triangulation(points, indices, vertexCount);
-    VtIntArray newIndices;
-    VtIntArray newFaces;
-    if (triangulation.FanTriangulate(newIndices, newFaces))
+    if (triangulation.Triangulate())
     {
+        VtIntArray newIndices;
+        VtIntArray newFaces;
+
+        triangulation.GetIndices(indices, newIndices);
+        triangulation.GetVertexCounts(newFaces);
+
         indicesAttr.Set(newIndices, timeCode);
         vertexCountAttr.Set(newFaces, timeCode);
         // TODO: Reshuffle normals?

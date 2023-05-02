@@ -27,7 +27,6 @@
 
 #include "pxr/usd/sdf/types.h"
 #include "pxr/usd/sdf/assetPath.h"
-#include "pxr/usd/usdGeom/triangulation.h"
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -418,12 +417,5 @@ UsdGeomMesh::GetFaceCount(UsdTimeCode timeCode) const
     return vertexCounts.size();
 }
 
-
-bool
-UsdGeomMesh::FanTriangulate()
-{
-    FanTriangulation triangulation(*this);
-    return triangulation.FanTriangulate();
-}
 
 PXR_NAMESPACE_CLOSE_SCOPE

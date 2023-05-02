@@ -368,6 +368,10 @@ pxr_install_test_dir(
     DEST testUsdviewPointInstancerVariant
 )
 
+pxr_install_test_dir(
+    SRC testenv/testUsdviewTriangulation
+    DEST testUsdviewTriangulation
+)
 
 pxr_register_test(testUsdviewAlive
     PRE_COMMAND "${PYTHON_EXECUTABLE} testUsdviewAliveSetup.py"
@@ -1013,6 +1017,17 @@ pxr_register_test(testUsdviewAdditive
     COMMAND "${CMAKE_INSTALL_PREFIX}/bin/testusdview --testScript testUsdviewAdditive.py test.usda"
     IMAGE_DIFF_COMPARE
         additive.png
+    FAIL 1
+    FAIL_PERCENT 0.0002
+    PERCEPTUAL
+    EXPECTED_RETURN_CODE 0
+)
+
+pxr_register_test(testUsdviewTriangulation
+    PYTHON
+    COMMAND "${CMAKE_INSTALL_PREFIX}/bin/testusdview --testScript testUsdviewTriangulation.py shapes.usda"
+    IMAGE_DIFF_COMPARE
+        convex.png
     FAIL 1
     FAIL_PERCENT 0.0002
     PERCEPTUAL

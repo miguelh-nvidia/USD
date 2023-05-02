@@ -51,7 +51,6 @@ pxr_library(usdGeom
         scope
         sphere
         subset
-        triangulation
         visibilityAPI
         xform
         xformable
@@ -142,7 +141,6 @@ pxr_test_scripts(
     testenv/testUsdGeomPurposeVisibility.py
     testenv/testUsdGeomSchemata.py
     testenv/testUsdGeomSubset.py
-    testenv/testUsdGeomTriangulation.py
     testenv/testUsdGeomXformable.py
     testenv/testUsdGeomXformCommonAPI.py
 )
@@ -208,10 +206,6 @@ pxr_install_test_dir(
 pxr_install_test_dir(
     SRC testenv/testUsdGeomSubset
     DEST testUsdGeomSubset)
-
-pxr_install_test_dir(
-    SRC testenv/testUsdGeomTriangulation
-    DEST testUsdGeomTriangulation)
 
 pxr_install_test_dir(
     SRC testenv/testUsdGeomBBoxCache
@@ -301,13 +295,6 @@ pxr_register_test(testUsdGeomMetrics
 pxr_register_test(testUsdGeomSubset
     PYTHON
     COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testUsdGeomSubset"
-    EXPECTED_RETURN_CODE 0
-)
-
-
-pxr_register_test(testUsdGeomTriangulation
-    PYTHON
-    COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testUsdGeomTriangulation"
     EXPECTED_RETURN_CODE 0
 )
 
