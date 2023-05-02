@@ -8,25 +8,25 @@ PXR_NAMESPACE_OPEN_SCOPE
 FacePoint::FacePoint(const GfVec3f& p,
     const GfVec3f& q,
     const GfVec3f& r) :
-    m_p(p),
-    m_q(q),
-    m_r(r),
-    m_direction(GfCross(p - q, r - q))
+    _p(p),
+    _q(q),
+    _r(r),
+    _direction(GfCross(p - q, r - q))
 {
 }
 
 FacePoint::FacePoint(FacePoint const& other) :
-    m_p(other.m_p),
-    m_q(other.m_q),
-    m_r(other.m_r),
-    m_direction(other.m_direction)
+    _p(other._p),
+    _q(other._q),
+    _r(other._r),
+    _direction(other._direction)
 {
 }
 
 bool
 FacePoint::HasSameOrientation(const FacePoint& other) const
 {
-    auto const value = GfDot(m_direction, other.m_direction);
+    auto const value = GfDot(_direction, other._direction);
     if (value < 0)
     {
         return false;
@@ -38,14 +38,14 @@ bool
 FacePoint::IsVisible(const GfVec3f& s) const
 {
     return
-        GfDot(GfCross(m_p - m_q, s - m_q), m_direction) >= 0 &&
-        GfDot(GfCross(s - m_q, m_r - m_q), m_direction) >= 0;
+        GfDot(GfCross(_p - _q, s - _q), _direction) >= 0 &&
+        GfDot(GfCross(s - _q, _r - _q), _direction) >= 0;
 }
 
 bool
 FacePoint::HasPoint(const GfVec3f& point) const
 {
-    return m_p == point || m_q == point || m_r == point;
+    return _p == point || _q == point || _r == point;
 }
 
 
@@ -53,9 +53,9 @@ bool
 FacePoint::ContainsPoint(const GfVec3f& s) const
 {
     return
-        GfDot(GfCross(m_q - m_p, m_r - m_p), GfCross(m_q - m_p, s - m_p)) > 0 &&
-        GfDot(GfCross(m_r - m_q, m_p - m_q), GfCross(m_r - m_q, s - m_q)) > 0 &&
-        GfDot(GfCross(m_p - m_r, m_q - m_r), GfCross(m_p - m_r, s - m_r)) > 0;
+        GfDot(GfCross(_q - _p, _r - _p), GfCross(_q - _p, s - _p)) > 0 &&
+        GfDot(GfCross(_r - _q, _p - _q), GfCross(_r - _q, s - _q)) > 0 &&
+        GfDot(GfCross(_p - _r, _q - _r), GfCross(_p - _r, s - _r)) > 0;
 }
 
 // Face
@@ -64,15 +64,15 @@ Face::Face(const VtVec3fArray& points,
     const VtIntArray& indices,
     const size_t indexStart,
     const size_t vertexCount) :
-    m_points(points),
-    m_indices(indices),
-    m_indexStart(indexStart),
-    m_vertexCount(vertexCount)
+    _points(points),
+    _indices(indices),
+    _indexStart(indexStart),
+    _vertexCount(vertexCount)
 {
 }
 
 FacePoint
-Face::GetReference() const
+Face::GetReferencePoint() const
 {
     size_t index = 0;
     for (size_t i = 1; i < size(); ++i)
@@ -285,7 +285,7 @@ Face::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
         // Invalid geometry will be later discarded
         // There is no modification to indices
         for (size_t i = 0; i < size(); ++i)
-            add(indices, i);
+            Add(indices, i);
         faces.push_back(size());
         return true;
     }
@@ -295,14 +295,14 @@ Face::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
         // Convex shapes can always fan triangulate
         // There is no modification to indices
         for (size_t i = 0; i < size(); ++i)
-            add(indices, i);
+            Add(indices, i);
         faces.push_back(size());
         return true;
     }
 
     // Calculate a point which belongs to the convex hull
     // Useful for the following calculations
-    FacePoint const reference = GetReference();
+    FacePoint const reference = GetReferencePoint();
 
     size_t visibleIndex;
     if (IsStarShaped(reference, visibleIndex))
@@ -310,7 +310,7 @@ Face::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
         // Star shapes can always fan triangulate
         // Indices may need to shift.
         for (size_t i = 0; i < size(); ++i)
-            add(indices, (visibleIndex + i) % size());
+            Add(indices, (visibleIndex + i) % size());
         faces.push_back(size());
         return true;
     }
@@ -321,7 +321,7 @@ Face::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
     {
         // Is ear clipping should work
         for (size_t i = 0; i < tmpIndices.size(); ++i)
-            add(indices, tmpIndices[i]);
+            Add(indices, tmpIndices[i]);
         for (size_t i = 0; i < tmpFaceCount.size(); ++i)
             faces.push_back(tmpFaceCount[i]);
         return true;
@@ -336,9 +336,9 @@ Face::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
 Triangulation::Triangulation(const VtVec3fArray& points,
     const VtIntArray& indices,
     const VtIntArray& vertexCount) :
-    m_points(points),
-    m_indices(indices),
-    m_vertexCount(vertexCount)
+    _points(points),
+    _indices(indices),
+    _vertexCount(vertexCount)
 {
 }
 
@@ -346,11 +346,11 @@ bool
 Triangulation::FanTriangulate(VtIntArray& indices, VtIntArray& faces) const
 {
     size_t indexStart = 0;
-    for (size_t i = 0; i < m_vertexCount.size(); ++i)
+    for (size_t i = 0; i < _vertexCount.size(); ++i)
     {
-        int numberOfVertices = m_vertexCount[i];
+        int numberOfVertices = _vertexCount[i];
 
-        Face const face(m_points, m_indices, indexStart, numberOfVertices);
+        Face const face(_points, _indices, indexStart, numberOfVertices);
         indexStart += numberOfVertices;
         if (!face.FanTriangulate(indices, faces))
         {

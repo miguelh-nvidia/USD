@@ -29,7 +29,7 @@ public:
     bool HasSameOrientation(const FacePoint& other) const;
 
     /// Computes two half planes <s, q, p> and <s, q, r> and checks whether those two planes
-    /// faces each other.
+    /// face each other.
     bool IsVisible(const GfVec3f& s) const;
 
     /// Whether the point is one of the points consisting this FacePoint.
@@ -39,10 +39,10 @@ public:
     /// in all of the three planes. Equivalent to find if a point lies within a triangle.
     bool ContainsPoint(const GfVec3f& s) const;
 private:
-    GfVec3f m_p;
-    GfVec3f m_q;
-    GfVec3f m_r;
-    GfVec3d m_direction;
+    GfVec3f _p;
+    GfVec3f _q;
+    GfVec3f _r;
+    GfVec3d _direction;
 };
 
 /// \class Face
@@ -61,21 +61,21 @@ public:
 private:
     size_t size() const
     {
-        return m_vertexCount;
+        return _vertexCount;
     }
 
     GfVec3f const& operator[](const size_t index) const
     {
-        size_t offset = m_indices[m_indexStart + index];
-        return m_points[offset];
+        size_t offset = _indices[_indexStart + index];
+        return _points[offset];
     }
 
     bool IsValid() const
     {
-        return m_vertexCount >= 3;
+        return _vertexCount >= 3;
     }
 
-    FacePoint GetReference() const;
+    FacePoint GetReferencePoint() const;
 
     /// Returns true if the current face is a convex shape, false otherwise.
     /// Checking if a face is convex is a linear operation and if it is convex,
@@ -83,26 +83,28 @@ private:
     bool IsConvex() const;
 
     /// Returns true if the current face is a star shaped, false otherwise.
-    /// A polygon is star shaped if there is at least one point where all points are visible.
+    /// A polygon is star shaped if there is at least one point in the polygon from which all points are visible.
     /// Checking if a face is star shaped is a linear operation and if it is star shaped,
-    /// the original indices will suffer a shift.
+    /// the original indices will be shifted upon triangulation
     bool IsStarShaped(const FacePoint& reference, size_t& index) const;
 
-    /// Returns true if the current face is ear clipping, false otherwise.
+    /// Returns true if the current face was successfully ear clipped, false otherwise.
     /// A simple polygon should be able to triangulate. This will modify all indices and face counts.
     /// This implementation is O(n * r) where r are the number of concave vertices.
     bool IsEarClipping(const FacePoint& reference, VtIntArray& indices, VtIntArray& faceCount) const;
 
-    void add(VtIntArray& indices, const size_t index) const
+
+    // Utility function. Add an index to the indices array.
+    void Add(VtIntArray& indices, const size_t index) const
     {
-        const size_t newIndex = m_indices[m_indexStart + index];
+        const size_t newIndex = _indices[_indexStart + index];
         indices.push_back(newIndex);
     }
 private:
-    const VtVec3fArray m_points;
-    const VtIntArray m_indices;
-    const size_t m_indexStart;
-    const size_t m_vertexCount;
+    const VtVec3fArray _points;
+    const VtIntArray _indices;
+    const size_t _indexStart;
+    const size_t _vertexCount;
 };
 
 /// \class Triangulation
@@ -116,9 +118,9 @@ public:
 
     bool FanTriangulate(VtIntArray& indices, VtIntArray& faces) const;
 private:
-    const VtVec3fArray m_points;
-    const VtIntArray m_indices;
-    const VtIntArray m_vertexCount;
+    const VtVec3fArray _points;
+    const VtIntArray _indices;
+    const VtIntArray _vertexCount;
 };
 
 /// \class FanTriangulation
