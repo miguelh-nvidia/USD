@@ -417,5 +417,4 @@ UsdGeomMesh::GetFaceCount(UsdTimeCode timeCode) const
     return vertexCounts.size();
 }
 
-
 PXR_NAMESPACE_CLOSE_SCOPE
