@@ -29,6 +29,7 @@
 #include "pxr/usdImaging/usdImaging/indexProxy.h"
 #include "pxr/usdImaging/usdImaging/primvarUtils.h"
 #include "pxr/usdImaging/usdImaging/tokens.h"
+#include "pxr/usdImaging/usdImaging/triangulation.h"
 
 #include "pxr/imaging/hd/mesh.h"
 #include "pxr/imaging/hd/geomSubset.h"
@@ -394,11 +395,23 @@ UsdImagingMeshAdapter::GetTopology(UsdPrim const& prim,
     TfToken schemeToken;
     _GetPtr(prim, UsdGeomTokens->subdivisionScheme, time, &schemeToken);
 
+    // Verify points are convex.
+    VtVec3fArray points = _Get<VtVec3fArray>(prim, UsdGeomTokens->points, time);
+    VtIntArray faceVertexCounts = _Get<VtIntArray>(prim, UsdGeomTokens->faceVertexCounts, time);
+    VtIntArray faceVertexIndices = _Get<VtIntArray>(prim, UsdGeomTokens->faceVertexIndices, time);
+
+    Triangulation triangulation(points, faceVertexIndices, faceVertexCounts);
+    triangulation.Triangulate();
+    VtIntArray outFaceVertexIndices;
+    VtIntArray outFaceVertexCounts;
+    triangulation.GetIndices(outFaceVertexIndices);
+    triangulation.GetVertexCounts(outFaceVertexCounts);
+
     HdMeshTopology meshTopo(
         schemeToken,
         _Get<TfToken>(prim, UsdGeomTokens->orientation, time),
-        _Get<VtIntArray>(prim, UsdGeomTokens->faceVertexCounts, time),
-        _Get<VtIntArray>(prim, UsdGeomTokens->faceVertexIndices, time),
+        outFaceVertexCounts,
+        outFaceVertexIndices,
         _Get<VtIntArray>(prim, UsdGeomTokens->holeIndices, time));
 
     // Convert UsdGeomSubsets to HdGeomSubsets.

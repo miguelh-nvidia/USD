@@ -113,6 +113,7 @@ pxr_library(usdImaging
         sphereAdapter
         sphereLightAdapter
         textureUtils
+        triangulation
         volumeAdapter
 
     PRIVATE_CLASSES
