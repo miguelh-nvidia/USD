@@ -624,6 +624,17 @@ pxr_register_test(testUsdviewMeshBounds
     EXPECTED_RETURN_CODE 0
 )
 
+pxr_register_test(testUsdviewTriangulation
+    PYTHON
+    COMMAND "${CMAKE_INSTALL_PREFIX}/bin/testusdview --testScript testUsdviewTriangulation.py test.usda"
+    IMAGE_DIFF_COMPARE
+        test.png
+    FAIL 1
+    FAIL_PERCENT 0.0002
+    PERCEPTUAL
+    EXPECTED_RETURN_CODE 0
+)
+
 if (APPLE)
     message(STATUS "Skipping ${PXR_PACKAGE} tests because they are currently unsupported on macOS")
     return()
@@ -1017,17 +1028,6 @@ pxr_register_test(testUsdviewAdditive
     COMMAND "${CMAKE_INSTALL_PREFIX}/bin/testusdview --testScript testUsdviewAdditive.py test.usda"
     IMAGE_DIFF_COMPARE
         additive.png
-    FAIL 1
-    FAIL_PERCENT 0.0002
-    PERCEPTUAL
-    EXPECTED_RETURN_CODE 0
-)
-
-pxr_register_test(testUsdviewTriangulation
-    PYTHON
-    COMMAND "${CMAKE_INSTALL_PREFIX}/bin/testusdview --testScript testUsdviewTriangulation.py shapes.usda"
-    IMAGE_DIFF_COMPARE
-        convex.png
     FAIL 1
     FAIL_PERCENT 0.0002
     PERCEPTUAL
