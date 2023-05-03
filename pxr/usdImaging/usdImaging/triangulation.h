@@ -132,20 +132,6 @@ private:
     VtIntArray _outVertexCount;
 };
 
-/// \class FanTriangulation
-/// A wrapper for UsdGeomMesh to generate Triangulation.
-class FanTriangulation
-{
-public:
-    FanTriangulation(UsdGeomMesh& mesh);
-
-    bool FanTriangulate();
-private:
-    bool FanTriangulate(const UsdTimeCode& timeCode);
-
-    UsdGeomMesh m_mesh;
-};
-
 PXR_NAMESPACE_CLOSE_SCOPE
 
 #endif // PXR_USD_IMAGING_USD_IMAGING_TRIANGULATION_H
