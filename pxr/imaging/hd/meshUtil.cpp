@@ -36,6 +36,7 @@
 #include "pxr/base/gf/vec4d.h"
 
 #include <unordered_set>
+#include <iostream>
 
 PXR_NAMESPACE_OPEN_SCOPE
 

@@ -27,6 +27,10 @@ pxr_library(hdsi
         primTypePruningSceneIndex
         renderSettingsFilteringSceneIndex
         sceneGlobalsSceneIndex
+        triangulationSceneIndex
+
+    PRIVATE_CLASSES
+        triangulation
 
     PUBLIC_HEADERS
         api.h

@@ -70,6 +70,20 @@ HdMeshTopologySchema::GetOrientation()
         HdMeshTopologySchemaTokens->orientation);
 }
 
+HdIntArrayDataSourceHandle
+HdMeshTopologySchema::GetFaceTriangulationCounts()
+{
+    return _GetTypedDataSource<HdIntArrayDataSource>(
+        HdMeshTopologySchemaTokens->faceTriangulationCounts);
+}
+
+HdIntArrayDataSourceHandle
+HdMeshTopologySchema::GetFaceTriangulationIndices()
+{
+    return _GetTypedDataSource<HdIntArrayDataSource>(
+        HdMeshTopologySchemaTokens->faceTriangulationIndices);
+}
+
 /*static*/
 HdContainerDataSourceHandle
 HdMeshTopologySchema::BuildRetained(
@@ -101,6 +115,55 @@ HdMeshTopologySchema::BuildRetained(
     if (orientation) {
         names[count] = HdMeshTopologySchemaTokens->orientation;
         values[count++] = orientation;
+    }
+
+    return HdRetainedContainerDataSource::New(count, names, values);
+}
+
+
+/*static*/
+HdContainerDataSourceHandle
+HdMeshTopologySchema::BuildRetained(
+    const HdIntArrayDataSourceHandle& faceVertexCounts,
+    const HdIntArrayDataSourceHandle& faceVertexIndices,
+    const HdIntArrayDataSourceHandle& holeIndices,
+    const HdTokenDataSourceHandle& orientation,
+    const HdIntArrayDataSourceHandle& faceTriangulationCounts,
+    const HdIntArrayDataSourceHandle& faceTriangulationIndices
+)
+{
+    TfToken names[6];
+    HdDataSourceBaseHandle values[6];
+
+    size_t count = 0;
+    if (faceVertexCounts) {
+        names[count] = HdMeshTopologySchemaTokens->faceVertexCounts;
+        values[count++] = faceVertexCounts;
+    }
+
+    if (faceVertexIndices) {
+        names[count] = HdMeshTopologySchemaTokens->faceVertexIndices;
+        values[count++] = faceVertexIndices;
+    }
+
+    if (holeIndices) {
+        names[count] = HdMeshTopologySchemaTokens->holeIndices;
+        values[count++] = holeIndices;
+    }
+
+    if (orientation) {
+        names[count] = HdMeshTopologySchemaTokens->orientation;
+        values[count++] = orientation;
+    }
+
+    if (faceTriangulationCounts) {
+        names[count] = HdMeshTopologySchemaTokens->faceTriangulationCounts;
+        values[count++] = faceTriangulationCounts;
+    }
+
+    if (faceTriangulationIndices) {
+        names[count] = HdMeshTopologySchemaTokens->faceTriangulationIndices;
+        values[count++] = faceTriangulationIndices;
     }
 
     return HdRetainedContainerDataSource::New(count, names, values);
@@ -187,6 +250,22 @@ HdMeshTopologySchema::Builder::SetOrientation(
     return *this;
 }
 
+HdMeshTopologySchema::Builder&
+HdMeshTopologySchema::Builder::SetFaceTriangulationCounts(
+    const HdIntArrayDataSourceHandle& faceTriangulationCounts)
+{
+    _faceTriangulationCounts = faceTriangulationCounts;
+    return *this;
+}
+
+HdMeshTopologySchema::Builder&
+HdMeshTopologySchema::Builder::SetFaceTriangulationIndices(
+    const HdIntArrayDataSourceHandle& faceTriangulationIndices)
+{
+    _faceTriangulationIndices = faceTriangulationIndices;
+    return *this;
+}
+
 HdContainerDataSourceHandle
 HdMeshTopologySchema::Builder::Build()
 {
@@ -194,7 +273,9 @@ HdMeshTopologySchema::Builder::Build()
         _faceVertexCounts,
         _faceVertexIndices,
         _holeIndices,
-        _orientation
+        _orientation,
+        _faceTriangulationCounts,
+        _faceTriangulationIndices
     );
 }
 

@@ -131,6 +131,7 @@ pxr_library(hdSt
         textureObjectRegistry
         textureUtils
         tokens
+        triangulationSceneIndexPlugin
         udimTextureObject
         unitTestGLDrawing
         vboMemoryManager

@@ -73,6 +73,7 @@ public:
                    const VtIntArray &faceVertexIndices,
                    const VtIntArray &holeIndices,
                    int refineLevel = 0);
+
     HD_API
     virtual ~HdMeshTopology();
 
@@ -212,6 +213,21 @@ public:
     }
     /// @}
 
+    VtIntArray const& GetFaceTriangulationCounts() const {
+        return _faceTriangulationCounts;
+    }
+
+    void SetFaceTriangulationCounts(VtIntArray const& faceTriangulationCounts) {
+        _faceTriangulationCounts = faceTriangulationCounts;
+    }
+
+    VtIntArray const& GetFaceTriangulationIndices() const {
+        return _faceTriangulationIndices;
+    }
+
+    void SetFaceTriangulationIndices(VtIntArray const& faceTriangulationIndices) {
+        _faceTriangulationIndices = faceTriangulationIndices;
+    }
 protected:
     PxOsdMeshTopology _topology;
     HdGeomSubsets _geomSubsets;
@@ -219,6 +235,8 @@ protected:
     VtIntArray _invisibleFaces;
     int _refineLevel;
     int _numPoints;
+    VtIntArray _faceTriangulationCounts;
+    VtIntArray _faceTriangulationIndices;
 };
 
 
