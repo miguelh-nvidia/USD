@@ -48,6 +48,8 @@ PXR_NAMESPACE_OPEN_SCOPE
     (orientation) \
     (leftHanded) \
     (rightHanded) \
+    (triangulationFlags) \
+    (triangulationIndices) \
 
 TF_DECLARE_PUBLIC_TOKENS(HdMeshTopologySchemaTokens, HD_API,
     HDMESHTOPOLOGY_SCHEMA_TOKENS);
@@ -70,6 +72,10 @@ public:
     HdIntArrayDataSourceHandle GetHoleIndices();
     HD_API
     HdTokenDataSourceHandle GetOrientation();
+    HD_API
+    HdIntArrayDataSourceHandle GetTriangulationFlags();
+    HD_API
+    HdVec3iArrayDataSourceHandle GetTriangulationIndices();
 
     // RETRIEVING AND CONSTRUCTING
 
@@ -85,6 +91,17 @@ public:
         const HdIntArrayDataSourceHandle &faceVertexIndices,
         const HdIntArrayDataSourceHandle &holeIndices,
         const HdTokenDataSourceHandle &orientation
+    );
+
+    HD_API
+    static HdContainerDataSourceHandle
+    BuildRetained(
+        const HdIntArrayDataSourceHandle& faceVertexCounts,
+        const HdIntArrayDataSourceHandle& faceVertexIndices,
+        const HdIntArrayDataSourceHandle& holeIndices,
+        const HdTokenDataSourceHandle& orientation,
+        const HdIntArrayDataSourceHandle& triangulationFlags,
+        const HdVec3iArrayDataSourceHandle& triangulationIndices
     );
 
     /// \class HdMeshTopologySchema::Builder
@@ -108,6 +125,12 @@ public:
         HD_API
         Builder &SetOrientation(
             const HdTokenDataSourceHandle &orientation);
+        HD_API
+        Builder &SetTriangulationFlags(
+            const HdIntArrayDataSourceHandle &triangulationFlags);
+        HD_API
+        Builder &SetTriangulationIndices(
+            const HdVec3iArrayDataSourceHandle &triangulationIndices);
 
         /// Returns a container data source containing the members set thus far.
         HD_API
@@ -118,6 +141,8 @@ public:
         HdIntArrayDataSourceHandle _faceVertexIndices;
         HdIntArrayDataSourceHandle _holeIndices;
         HdTokenDataSourceHandle _orientation;
+        HdIntArrayDataSourceHandle _triangulationFlags;
+        HdVec3iArrayDataSourceHandle _triangulationIndices;
     };
 
     /// Retrieves a container data source with the schema's default name token

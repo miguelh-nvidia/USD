@@ -437,6 +437,19 @@ HdSceneIndexAdapterSceneDelegate::GetMeshTopology(SdfPath const &id)
         faceVertexIndicesDataSource->GetTypedValue(0.0f),
         holeIndices);
 
+    HdIntArrayDataSourceHandle triangulationFlagsDataSource =
+        meshTopologySchema.GetTriangulationFlags();
+    HdVec3iArrayDataSourceHandle triangulationIndicesDataSource =
+        meshTopologySchema.GetTriangulationIndices();
+    if (triangulationFlagsDataSource && triangulationIndicesDataSource) {
+        meshTopology.SetTriangulationFlags(
+            triangulationFlagsDataSource->GetTypedValue(0)
+        );
+        meshTopology.SetTriangulationIndices(
+            triangulationIndicesDataSource->GetTypedValue(0)
+        );
+    }
+
     HdGeomSubsetsSchema geomSubsets = meshSchema.GetGeomSubsets();
     if (geomSubsets.IsDefined()) {
         HdGeomSubsets geomSubsetsVec;

@@ -34,6 +34,7 @@
 
 #include "pxr/base/vt/array.h"
 #include "pxr/base/vt/value.h"
+#include "pxr/base/gf/vec3i.h"
 
 #include "pxr/base/tf/token.h"
 
@@ -73,6 +74,7 @@ public:
                    const VtIntArray &faceVertexIndices,
                    const VtIntArray &holeIndices,
                    int refineLevel = 0);
+
     HD_API
     virtual ~HdMeshTopology();
 
@@ -212,6 +214,21 @@ public:
     }
     /// @}
 
+    VtIntArray const& GetTriangulationFlags() const {
+        return _triangulationFlags;
+    }
+
+    void SetTriangulationFlags(VtIntArray const& triangulationFlags) {
+        _triangulationFlags = triangulationFlags;
+    }
+
+    VtVec3iArray const& GetTriangulationIndices() const {
+        return _triangulationIndices;
+    }
+
+    void SetTriangulationIndices(VtVec3iArray const& triangulationIndices) {
+        _triangulationIndices = triangulationIndices;
+    }
 protected:
     PxOsdMeshTopology _topology;
     HdGeomSubsets _geomSubsets;
@@ -219,6 +236,8 @@ protected:
     VtIntArray _invisibleFaces;
     int _refineLevel;
     int _numPoints;
+    VtIntArray _triangulationFlags;
+    VtVec3iArray _triangulationIndices;
 };
 
 
