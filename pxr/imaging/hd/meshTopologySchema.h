@@ -48,8 +48,8 @@ PXR_NAMESPACE_OPEN_SCOPE
     (orientation) \
     (leftHanded) \
     (rightHanded) \
-    (faceTriangulationCounts) \
-    (faceTriangulationIndices) \
+    (triangulationFlags) \
+    (triangulationIndices) \
 
 TF_DECLARE_PUBLIC_TOKENS(HdMeshTopologySchemaTokens, HD_API,
     HDMESHTOPOLOGY_SCHEMA_TOKENS);
@@ -73,9 +73,9 @@ public:
     HD_API
     HdTokenDataSourceHandle GetOrientation();
     HD_API
-    HdIntArrayDataSourceHandle GetFaceTriangulationCounts();
+    HdIntArrayDataSourceHandle GetTriangulationFlags();
     HD_API
-    HdIntArrayDataSourceHandle GetFaceTriangulationIndices();
+    HdVec3iArrayDataSourceHandle GetTriangulationIndices();
 
     // RETRIEVING AND CONSTRUCTING
 
@@ -100,8 +100,8 @@ public:
         const HdIntArrayDataSourceHandle& faceVertexIndices,
         const HdIntArrayDataSourceHandle& holeIndices,
         const HdTokenDataSourceHandle& orientation,
-        const HdIntArrayDataSourceHandle& faceTriangulationCounts,
-        const HdIntArrayDataSourceHandle& faceTriangulationIndices
+        const HdIntArrayDataSourceHandle& triangulationFlags,
+        const HdVec3iArrayDataSourceHandle& triangulationIndices
     );
 
     /// \class HdMeshTopologySchema::Builder
@@ -126,11 +126,11 @@ public:
         Builder &SetOrientation(
             const HdTokenDataSourceHandle &orientation);
         HD_API
-        Builder &SetFaceTriangulationCounts(
-            const HdIntArrayDataSourceHandle &faceTriangulationCounts);
+        Builder &SetTriangulationFlags(
+            const HdIntArrayDataSourceHandle &triangulationFlags);
         HD_API
-        Builder &SetFaceTriangulationIndices(
-            const HdIntArrayDataSourceHandle &faceTriangulationIndices);
+        Builder &SetTriangulationIndices(
+            const HdVec3iArrayDataSourceHandle &triangulationIndices);
 
         /// Returns a container data source containing the members set thus far.
         HD_API
@@ -141,8 +141,8 @@ public:
         HdIntArrayDataSourceHandle _faceVertexIndices;
         HdIntArrayDataSourceHandle _holeIndices;
         HdTokenDataSourceHandle _orientation;
-        HdIntArrayDataSourceHandle _faceTriangulationCounts;
-        HdIntArrayDataSourceHandle _faceTriangulationIndices;
+        HdIntArrayDataSourceHandle _triangulationFlags;
+        HdVec3iArrayDataSourceHandle _triangulationIndices;
     };
 
     /// Retrieves a container data source with the schema's default name token

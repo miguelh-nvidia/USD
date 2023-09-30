@@ -209,7 +209,7 @@ public:
         const size_t indexStart,
         const size_t vertexCount);
 
-    bool Triangulate(VtIntArray& indices, VtIntArray& faces) const;
+    bool Triangulate(VtVec3iArray& indices, VtIntArray& flags) const;
 private:
     size_t size() const
     {
@@ -236,6 +236,9 @@ private:
     /// the original indices and faces will not suffer modifications.
     bool IsConvex() const;
 
+    int TriangulateFlag(const size_t p, const size_t q, const size_t r) const;
+
+    void FanTriangulate(VtVec3iArray& indices, VtIntArray& flags) const;
 private:
     const VtVec3fArray& points;
     const VtIntArray& indices;
@@ -255,16 +258,16 @@ public:
 
     bool Triangulate();
 
-    void GetIndices(VtIntArray& outIndices) const;
+    void GetIndices(VtVec3iArray& outIndices) const;
 
-    void GetVertexCounts(VtIntArray& vertexCounts) const;
+    void GetFlags(VtIntArray& outFlags) const;
 private:
     const VtVec3fArray _points;
     const VtIntArray _indices;
     const VtIntArray _vertexCount;
 
-    VtIntArray _triangulationIndices;
-    VtIntArray _triangulationCounts;
+    VtVec3iArray _triangulationIndices;
+    VtIntArray _triangulationFlags;
 };
 
 PXR_NAMESPACE_CLOSE_SCOPE

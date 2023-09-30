@@ -116,10 +116,10 @@ void TriangulationSceneIndex::_PrimsAdded(
 
         Triangulation triangulation(points, faceVertexIndices, faceVertexCounts);
         triangulation.Triangulate();
-        VtIntArray faceTriangulationCounts;
-        VtIntArray faceTriangulationIndices;
-        triangulation.GetVertexCounts(faceTriangulationCounts);
-        triangulation.GetIndices(faceTriangulationIndices);
+        VtIntArray triangulationFlags;
+        VtVec3iArray triangulationIndices;
+        triangulation.GetFlags(triangulationFlags);
+        triangulation.GetIndices(triangulationIndices);
 
         HdSceneIndexPrim prim;
         prim.primType = pxr::HdPrimTypeTokens->mesh;
@@ -127,16 +127,16 @@ void TriangulationSceneIndex::_PrimsAdded(
         auto meshPointsDs = HdRetainedTypedSampledDataSource<VtVec3fArray>::New(points);
         auto faceVertexCountsDs = HdRetainedTypedSampledDataSource<VtIntArray>::New(faceVertexCounts);
         auto faceVertexIndicesDs = HdRetainedTypedSampledDataSource<VtIntArray>::New(faceVertexIndices);
-        auto faceTriangulationCountsDs = HdRetainedTypedSampledDataSource<VtIntArray>::New(faceTriangulationCounts);
-        auto faceTriangulationIndicesDs = HdRetainedTypedSampledDataSource<VtIntArray>::New(faceTriangulationIndices);
+        auto triangulationFlagsDs = HdRetainedTypedSampledDataSource<VtIntArray>::New(triangulationFlags);
+        auto triangulationIndicesDs = HdRetainedTypedSampledDataSource<VtVec3iArray>::New(triangulationIndices);
 
         auto meshDs =
             pxr::HdMeshSchema::Builder()
             .SetTopology(pxr::HdMeshTopologySchema::Builder()
                 .SetFaceVertexCounts(faceVertexCountsDs)
                 .SetFaceVertexIndices(faceVertexIndicesDs)
-                .SetFaceTriangulationCounts(faceTriangulationCountsDs)
-                .SetFaceTriangulationIndices(faceTriangulationIndicesDs)
+                .SetTriangulationFlags(triangulationFlagsDs)
+                .SetTriangulationIndices(triangulationIndicesDs)
                 .Build())
             .SetDoubleSided(
                 HdRetainedTypedSampledDataSource<bool>::New(true))

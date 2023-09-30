@@ -34,6 +34,7 @@
 
 #include "pxr/base/vt/array.h"
 #include "pxr/base/vt/value.h"
+#include "pxr/base/gf/vec3i.h"
 
 #include "pxr/base/tf/token.h"
 
@@ -213,20 +214,20 @@ public:
     }
     /// @}
 
-    VtIntArray const& GetFaceTriangulationCounts() const {
-        return _faceTriangulationCounts;
+    VtIntArray const& GetTriangulationFlags() const {
+        return _triangulationFlags;
     }
 
-    void SetFaceTriangulationCounts(VtIntArray const& faceTriangulationCounts) {
-        _faceTriangulationCounts = faceTriangulationCounts;
+    void SetTriangulationFlags(VtIntArray const& triangulationFlags) {
+        _triangulationFlags = triangulationFlags;
     }
 
-    VtIntArray const& GetFaceTriangulationIndices() const {
-        return _faceTriangulationIndices;
+    VtVec3iArray const& GetTriangulationIndices() const {
+        return _triangulationIndices;
     }
 
-    void SetFaceTriangulationIndices(VtIntArray const& faceTriangulationIndices) {
-        _faceTriangulationIndices = faceTriangulationIndices;
+    void SetTriangulationIndices(VtVec3iArray const& triangulationIndices) {
+        _triangulationIndices = triangulationIndices;
     }
 protected:
     PxOsdMeshTopology _topology;
@@ -235,8 +236,8 @@ protected:
     VtIntArray _invisibleFaces;
     int _refineLevel;
     int _numPoints;
-    VtIntArray _faceTriangulationCounts;
-    VtIntArray _faceTriangulationIndices;
+    VtIntArray _triangulationFlags;
+    VtVec3iArray _triangulationIndices;
 };
 
 

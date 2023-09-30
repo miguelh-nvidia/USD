@@ -609,19 +609,51 @@ Face::IsConvex() const
 }
 
 
+int
+Face::TriangulateFlag(const size_t p, const size_t q, const size_t r) const
+{
+    auto adjacent = [](const size_t i, const size_t j, const size_t length) {
+        return (i + 1) % length == j || (i + length - 1) % length == j;
+    };
+    bool pq = adjacent(p, q, size());
+    bool qr = adjacent(q, r, size());
+    bool rp = adjacent(r, p, size());
+    if (pq && qr && rp) {
+        return 0; // Show all edges
+    }
+    if (pq && qr && !rp) {
+        return 1; // hide [2-0]
+    }
+    if (!pq && qr && rp) {
+        return 2; // hide [0-1]
+    }
+    if (!pq && qr && !rp) {
+        return 3; // hide [0-1] and [2-0]
+    }
+    if (!pq && !qr && !rp) {
+        return 4; // hide all
+    }
+}
+
+void
+Face::FanTriangulate(VtVec3iArray& indices, VtIntArray& flags) const
+{
+    for (size_t i = 0; i < size() - 2; ++i)
+    {
+        indices.push_back(GfVec3i(index(i), index(i + 1), index(i + 2)));
+        flags.push_back(TriangulateFlag(i, i + 1, i + 2));
+    }
+}
+
 
 bool
-Face::Triangulate(VtIntArray& outIndices, VtIntArray& outFaces) const
+Face::Triangulate(VtVec3iArray& indices, VtIntArray& flags) const
 {
     if (!IsValid())
     {
         // Invalid geometry will be later discarded
         // There is no modification to indices
-        for (size_t i = 0; i < size(); ++i)
-        {
-            outIndices.push_back(index(i));
-        }
-        outFaces.push_back((int)size());
+        FanTriangulate(indices, flags);
         return true;
     }
 
@@ -629,11 +661,7 @@ Face::Triangulate(VtIntArray& outIndices, VtIntArray& outFaces) const
     {
         // Convex shapes can always fan triangulate
         // There is no modification to indices
-        for (size_t i = 0; i < size(); ++i)
-        {
-            outIndices.push_back(index(i));
-        }
-        outFaces.push_back((int)size());
+        FanTriangulate(indices, flags);
         return true;
     }
 
@@ -646,7 +674,7 @@ Face::Triangulate(VtIntArray& outIndices, VtIntArray& outFaces) const
     for (size_t i = 0; i < size(); ++i) {
         double px = GfDot((*this)[i], x);
         double py = GfDot((*this)[i], y);
-        values.push_back(Point2D(index(i), px, py));
+        values.push_back(Point2D(i, px, py));
     }
 
     SweepLine2D sweepLine(values);
@@ -657,11 +685,12 @@ Face::Triangulate(VtIntArray& outIndices, VtIntArray& outFaces) const
         std::vector<Point2D> result;
         triangulation.triangulate(result);
 
-        for (size_t i = 0; i < result.size(); ++i) {
-            outIndices.push_back(result[i].index);
-        }
         for (size_t i = 0; i < result.size(); i += 3) {
-            outFaces.push_back(3);
+            const size_t p = result[i].index;
+            const size_t q = result[i + 1].index;
+            const size_t r = result[i + 2].index;
+            indices.push_back(GfVec3i(index(p), index(q), index(r)));
+            flags.push_back(TriangulateFlag(p, q, r));
         }
     }
 
@@ -678,7 +707,7 @@ Triangulation::Triangulation(
     _indices(indices),
     _vertexCount(vertexCount),
     _triangulationIndices(),
-    _triangulationCounts()
+    _triangulationFlags()
 {
 }
 
@@ -692,7 +721,7 @@ Triangulation::Triangulate()
         int const numberOfVertices = _vertexCount[i];
 
         Face const face(_points, _indices, indexStart, numberOfVertices);
-        flag &= face.Triangulate(_triangulationIndices, _triangulationCounts);
+        flag &= face.Triangulate(_triangulationIndices, _triangulationFlags);
 
         indexStart += numberOfVertices;
     }
@@ -700,11 +729,11 @@ Triangulation::Triangulate()
 }
 
 void
-Triangulation::GetIndices(VtIntArray& outIndices) const
+Triangulation::GetIndices(VtVec3iArray& outIndices) const
 {
     for (size_t i = 0; i < _triangulationIndices.size(); ++i)
     {
-        int const index = _triangulationIndices[i];
+        GfVec3i const index = _triangulationIndices[i];
 
         outIndices.push_back(index);
     }
@@ -712,13 +741,13 @@ Triangulation::GetIndices(VtIntArray& outIndices) const
 
 
 void
-Triangulation::GetVertexCounts(VtIntArray& vertexCounts) const
+Triangulation::GetFlags(VtIntArray& outFlags) const
 {
-    for (size_t i = 0; i < _triangulationCounts.size(); ++i)
+    for (size_t i = 0; i < _triangulationFlags.size(); ++i)
     {
-        int const count = _triangulationCounts[i];
+        int const count = _triangulationFlags[i];
 
-        vertexCounts.push_back(count);
+        outFlags.push_back(count);
     }
 }
 

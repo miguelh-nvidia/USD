@@ -41,6 +41,8 @@ HdMeshTopology::HdMeshTopology()
  , _invisibleFaces()
  , _refineLevel(0)
  , _numPoints()
+ , _triangulationFlags()
+ , _triangulationIndices()
 {
     HD_PERF_COUNTER_INCR(HdPerfTokens->meshTopology);
 }
@@ -54,6 +56,8 @@ HdMeshTopology::HdMeshTopology(const HdMeshTopology &src,
  , _invisibleFaces(src._invisibleFaces)
  , _refineLevel(refineLevel)
  , _numPoints(src._numPoints)
+ , _triangulationFlags()
+ , _triangulationIndices()
 {
     HD_PERF_COUNTER_INCR(HdPerfTokens->meshTopology);
 }
@@ -66,8 +70,8 @@ HdMeshTopology::HdMeshTopology(const PxOsdMeshTopology &topo,
  , _invisibleFaces()
  , _refineLevel(refineLevel)
  , _numPoints()
- , _faceTriangulationCounts()
- , _faceTriangulationIndices()
+ , _triangulationFlags()
+ , _triangulationIndices()
 {
     HD_PERF_COUNTER_INCR(HdPerfTokens->meshTopology);
     _numPoints = HdMeshTopology::ComputeNumPoints(
@@ -88,8 +92,8 @@ HdMeshTopology::HdMeshTopology(const TfToken &scheme,
  , _invisibleFaces()
  , _refineLevel(refineLevel)
  , _numPoints()
- , _faceTriangulationCounts()
- , _faceTriangulationIndices()
+ , _triangulationFlags()
+ , _triangulationIndices()
 {
     HD_PERF_COUNTER_INCR(HdPerfTokens->meshTopology);
     _numPoints = HdMeshTopology::ComputeNumPoints(
@@ -112,8 +116,8 @@ HdMeshTopology::HdMeshTopology(const TfToken &scheme,
  , _invisibleFaces()
  , _refineLevel(refineLevel)
  , _numPoints()
- , _faceTriangulationCounts()
- , _faceTriangulationIndices()
+ , _triangulationFlags()
+ , _triangulationIndices()
 {
     HD_PERF_COUNTER_INCR(HdPerfTokens->meshTopology);
     _numPoints = HdMeshTopology::ComputeNumPoints(
@@ -136,8 +140,8 @@ HdMeshTopology::operator =(const HdMeshTopology &copy)
     _numPoints       = copy._numPoints;
     _invisiblePoints = copy._invisiblePoints;
     _invisibleFaces  = copy._invisibleFaces;
-    _faceTriangulationCounts = copy._faceTriangulationCounts;
-    _faceTriangulationIndices = copy._faceTriangulationIndices;
+    _triangulationFlags = copy._triangulationFlags;
+    _triangulationIndices = copy._triangulationIndices;
 
     return *this;
 }
@@ -158,7 +162,7 @@ HdMeshTopology::operator==(HdMeshTopology const &other) const {
         && (_invisiblePoints == other._invisiblePoints)
         && (_invisibleFaces == other._invisibleFaces)
         && (_refineLevel == other._refineLevel);
-    // TODO: Compare face triangulations. or not?
+    // TODO: Do we need to compare triangulations?
     // Don't compare _numPoints, since it is derived from _topology.
 }
 
