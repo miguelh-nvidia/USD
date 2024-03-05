@@ -32,14 +32,12 @@
 /* **                                                                      ** */
 /* ************************************************************************** */
 
-#ifndef PXR_IMAGING_HD_MESH_TOPOLOGY_SCHEMA_H
-#define PXR_IMAGING_HD_MESH_TOPOLOGY_SCHEMA_H
+#ifndef PXR_IMAGING_HD_MESH_TRIANGULATION_SCHEMA_H
+#define PXR_IMAGING_HD_MESH_TRIANGULATION_SCHEMA_H
 
 /// \file
 
 #include "pxr/imaging/hd/api.h"
-#include "pxr/imaging/hd/subdivisionTagsSchema.h"
-#include "pxr/imaging/hd/meshTriangulationSchema.h"
 
 #include "pxr/imaging/hd/schema.h"
 
@@ -51,38 +49,33 @@ PXR_NAMESPACE_OPEN_SCOPE
 // --(BEGIN CUSTOM CODE: Declares)--
 // --(END CUSTOM CODE: Declares)--
 
-#define HD_MESH_TOPOLOGY_SCHEMA_TOKENS \
-    (topology) \
-    (faceVertexCounts) \
-    (faceVertexIndices) \
-    (holeIndices) \
-    (orientation) \
+#define HD_MESH_TRIANGULATION_SCHEMA_TOKENS \
     (triangulation) \
-    (leftHanded) \
-    (rightHanded) \
+    (triangleIndices) \
+    (triangleFlags) \
 
-TF_DECLARE_PUBLIC_TOKENS(HdMeshTopologySchemaTokens, HD_API,
-    HD_MESH_TOPOLOGY_SCHEMA_TOKENS);
+TF_DECLARE_PUBLIC_TOKENS(HdMeshTriangulationSchemaTokens, HD_API,
+    HD_MESH_TRIANGULATION_SCHEMA_TOKENS);
 
 //-----------------------------------------------------------------------------
 
 
-class HdMeshTopologySchema : public HdSchema
+class HdMeshTriangulationSchema : public HdSchema
 {
 public:
     /// \name Schema retrieval
     /// @{
 
-    HdMeshTopologySchema(HdContainerDataSourceHandle container)
+    HdMeshTriangulationSchema(HdContainerDataSourceHandle container)
       : HdSchema(container) {}
 
     /// Retrieves a container data source with the schema's default name token
-    /// "topology" from the parent container and constructs a
-    /// HdMeshTopologySchema instance.
+    /// "triangulation" from the parent container and constructs a
+    /// HdMeshTriangulationSchema instance.
     /// Because the requested container data source may not exist, the result
     /// should be checked with IsDefined() or a bool comparison before use.
     HD_API
-    static HdMeshTopologySchema GetFromParent(
+    static HdMeshTriangulationSchema GetFromParent(
         const HdContainerDataSourceHandle &fromParentContainer);
 
     /// @}
@@ -94,19 +87,10 @@ public:
     /// @{
 
     HD_API
-    HdIntArrayDataSourceHandle GetFaceVertexCounts();
+    HdVec3iArrayDataSourceHandle GetTriangleIndices();
 
     HD_API
-    HdIntArrayDataSourceHandle GetFaceVertexIndices();
-
-    HD_API
-    HdIntArrayDataSourceHandle GetHoleIndices();
-
-    HD_API
-    HdTokenDataSourceHandle GetOrientation();
-
-    HD_API
-    HdMeshTriangulationSchema GetTriangulation(); 
+    HdIntArrayDataSourceHandle GetTriangleFlags(); 
 
     /// @}
 
@@ -138,14 +122,11 @@ public:
     HD_API
     static HdContainerDataSourceHandle
     BuildRetained(
-        const HdIntArrayDataSourceHandle &faceVertexCounts,
-        const HdIntArrayDataSourceHandle &faceVertexIndices,
-        const HdIntArrayDataSourceHandle &holeIndices,
-        const HdTokenDataSourceHandle &orientation,
-        const HdContainerDataSourceHandle &triangulation
+        const HdVec3iArrayDataSourceHandle &triangleIndices,
+        const HdIntArrayDataSourceHandle &triangleFlags
     );
 
-    /// \class HdMeshTopologySchema::Builder
+    /// \class HdMeshTriangulationSchema::Builder
     /// 
     /// Utility class for setting sparse sets of child data source fields to be
     /// filled as arguments into BuildRetained. Because all setter methods
@@ -155,43 +136,21 @@ public:
     {
     public:
         HD_API
-        Builder &SetFaceVertexCounts(
-            const HdIntArrayDataSourceHandle &faceVertexCounts);
+        Builder &SetTriangleIndices(
+            const HdVec3iArrayDataSourceHandle &triangleIndices);
         HD_API
-        Builder &SetFaceVertexIndices(
-            const HdIntArrayDataSourceHandle &faceVertexIndices);
-        HD_API
-        Builder &SetHoleIndices(
-            const HdIntArrayDataSourceHandle &holeIndices);
-        HD_API
-        Builder &SetOrientation(
-            const HdTokenDataSourceHandle &orientation);
-        HD_API
-        Builder &SetTriangulation(
-            const HdContainerDataSourceHandle &triangulation);
+        Builder &SetTriangleFlags(
+            const HdIntArrayDataSourceHandle &triangleFlags);
 
         /// Returns a container data source containing the members set thus far.
         HD_API
         HdContainerDataSourceHandle Build();
 
     private:
-        HdIntArrayDataSourceHandle _faceVertexCounts;
-        HdIntArrayDataSourceHandle _faceVertexIndices;
-        HdIntArrayDataSourceHandle _holeIndices;
-        HdTokenDataSourceHandle _orientation;
-        HdContainerDataSourceHandle _triangulation;
+        HdVec3iArrayDataSourceHandle _triangleIndices;
+        HdIntArrayDataSourceHandle _triangleFlags;
 
     };
-
-    /// Returns token data source for use as orientation value.
-    ///
-    /// The following values will be stored statically and reused for future
-    /// calls:
-    /// - HdMeshTopologySchemaTokens->leftHanded
-    /// - HdMeshTopologySchemaTokens->rightHanded
-    HD_API
-    static HdTokenDataSourceHandle BuildOrientationDataSource(
-        const TfToken &orientation);
 
     /// @}
 };

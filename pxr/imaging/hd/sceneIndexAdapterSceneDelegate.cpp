@@ -80,6 +80,7 @@
 #include "pxr/imaging/hd/materialSchema.h"
 #include "pxr/imaging/hd/meshSchema.h"
 #include "pxr/imaging/hd/meshTopologySchema.h"
+#include "pxr/imaging/hd/meshTriangulationSchema.h"
 #include "pxr/imaging/hd/primvarSchema.h"
 #include "pxr/imaging/hd/primvarsSchema.h"
 #include "pxr/imaging/hd/purposeSchema.h"
@@ -457,6 +458,16 @@ HdSceneIndexAdapterSceneDelegate::GetMeshTopology(SdfPath const &id)
         faceVertexCountsDataSource->GetTypedValue(0.0f),
         faceVertexIndicesDataSource->GetTypedValue(0.0f),
         holeIndices);
+
+    HdMeshTriangulationSchema meshTriangulationSchema = meshTopologySchema.GetTriangulation();
+    if (meshTriangulationSchema) {
+        meshTopology.SetTriangulation(
+            HdMeshTriangulation(
+                meshTriangulationSchema.GetTriangleIndices()->GetTypedValue(0.0f),
+                meshTriangulationSchema.GetTriangleFlags()->GetTypedValue(0.0f)
+            )
+        );
+    }
 
     HdGeomSubsetsSchema geomSubsets = meshSchema.GetGeomSubsets();
     if (geomSubsets.IsDefined()) {

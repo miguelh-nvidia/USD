@@ -120,6 +120,8 @@ pxr_library(hd
         meshSchema
         meshTopology
         meshTopologySchema
+        meshTriangulation
+        meshTriangulationSchema
         meshUtil
         noticeBatchingSceneIndex
         nurbsCurvesSchema

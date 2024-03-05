@@ -125,12 +125,16 @@
     dict(
         SCHEMA_NAME = 'MeshTopology',
         SCHEMA_TOKEN = 'topology',
-        SCHEMA_INCLUDES = ['{{LIBRARY_PATH}}/subdivisionTagsSchema'],
+        SCHEMA_INCLUDES = [
+            '{{LIBRARY_PATH}}/subdivisionTagsSchema',
+            '{{LIBRARY_PATH}}/meshTriangulationSchema',
+        ],
         MEMBERS = [
             ('faceVertexCounts', T_INTARRAY, {}),
             ('faceVertexIndices', T_INTARRAY, {}),
             ('holeIndices', T_INTARRAY, {}),
             ('orientation', T_TOKEN, {}),
+            ('triangulation', 'HdMeshTriangulationSchema', {}),
         ],
         IMPL_SCHEMA_INCLUDES = ['{{LIBRARY_PATH}}/meshSchema'],
         LOCATOR_PREFIX = 'HdMeshSchema::GetDefaultLocator()',
@@ -139,6 +143,18 @@
         STATIC_TOKEN_DATASOURCE_BUILDERS = [ # optional for shared token ds's
             ('orientation', ['leftHanded', 'rightHanded']),
         ],
+    ),
+
+    #--------------------------------------------------------------------------
+    # meshTriangulation
+    dict(
+        SCHEMA_NAME = 'MeshTriangulation',
+        SCHEMA_TOKEN = 'triangulation',
+        MEMBERS = [
+            ('triangleIndices', T_VEC3IARRAY, {}),
+            ('triangleFlags', T_INTARRAY, {}),
+        ],
+        ADD_DEFAULT_LOCATOR = True,
     ),
 
     #--------------------------------------------------------------------------

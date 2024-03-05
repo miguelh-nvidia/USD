@@ -27,6 +27,7 @@
 #include "pxr/pxr.h"
 #include "pxr/imaging/hd/api.h"
 #include "pxr/imaging/hd/geomSubset.h"
+#include "pxr/imaging/hd/meshTriangulation.h"
 #include "pxr/imaging/hd/version.h"
 #include "pxr/imaging/hd/topology.h"
 
@@ -212,11 +213,21 @@ public:
     }
     /// @}
 
+    HD_API
+    HdMeshTriangulation const & GetTriangulation() const {
+        return _triangulation;
+    }
+
+    HD_API
+    void SetTriangulation(HdMeshTriangulation const& triangulation) {
+        _triangulation = triangulation;
+    }
 protected:
     PxOsdMeshTopology _topology;
     HdGeomSubsets _geomSubsets;
     VtIntArray _invisiblePoints;
     VtIntArray _invisibleFaces;
+    HdMeshTriangulation _triangulation;
     int _refineLevel;
     int _numPoints;
 };

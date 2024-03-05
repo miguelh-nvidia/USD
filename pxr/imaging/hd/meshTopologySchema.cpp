@@ -78,17 +78,25 @@ HdMeshTopologySchema::GetOrientation()
         HdMeshTopologySchemaTokens->orientation);
 }
 
+HdMeshTriangulationSchema
+HdMeshTopologySchema::GetTriangulation()
+{
+    return HdMeshTriangulationSchema(_GetTypedDataSource<HdContainerDataSource>(
+        HdMeshTopologySchemaTokens->triangulation));
+}
+
 /*static*/
 HdContainerDataSourceHandle
 HdMeshTopologySchema::BuildRetained(
         const HdIntArrayDataSourceHandle &faceVertexCounts,
         const HdIntArrayDataSourceHandle &faceVertexIndices,
         const HdIntArrayDataSourceHandle &holeIndices,
-        const HdTokenDataSourceHandle &orientation
+        const HdTokenDataSourceHandle &orientation,
+        const HdContainerDataSourceHandle &triangulation
 )
 {
-    TfToken _names[4];
-    HdDataSourceBaseHandle _values[4];
+    TfToken _names[5];
+    HdDataSourceBaseHandle _values[5];
 
     size_t _count = 0;
 
@@ -110,6 +118,11 @@ HdMeshTopologySchema::BuildRetained(
     if (orientation) {
         _names[_count] = HdMeshTopologySchemaTokens->orientation;
         _values[_count++] = orientation;
+    }
+
+    if (triangulation) {
+        _names[_count] = HdMeshTopologySchemaTokens->triangulation;
+        _values[_count++] = triangulation;
     }
     return HdRetainedContainerDataSource::New(_count, _names, _values);
 }
@@ -146,6 +159,14 @@ HdMeshTopologySchema::Builder::SetOrientation(
     return *this;
 }
 
+HdMeshTopologySchema::Builder &
+HdMeshTopologySchema::Builder::SetTriangulation(
+    const HdContainerDataSourceHandle &triangulation)
+{
+    _triangulation = triangulation;
+    return *this;
+}
+
 HdContainerDataSourceHandle
 HdMeshTopologySchema::Builder::Build()
 {
@@ -153,7 +174,8 @@ HdMeshTopologySchema::Builder::Build()
         _faceVertexCounts,
         _faceVertexIndices,
         _holeIndices,
-        _orientation
+        _orientation,
+        _triangulation
     );
 }
 

@@ -91,7 +91,23 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
         TF_CODING_ERROR("No output buffer provided for triangulation");
         return;
     }
+    if (_topology->GetTriangulation().IsValid()) 
+    {
+        const VtVec3iArray& srcIndices = _topology->GetTriangulation().indices;
+        const VtIntArray& srcFlags = _topology->GetTriangulation().flags;
+        indices->resize(srcIndices.size());
+        primitiveParams->resize(srcIndices.size());
+        for (size_t i=0; i < srcIndices.size(); ++i)
+        {
+            GfVec3i srcIndex = srcIndices[i];
+            GfVec3i &index = (*indices)[i];
+            index.Set(srcIndex[0], srcIndex[1], srcIndex[2]);
 
+            const int edgeFlag = srcFlags[i];
+            (*primitiveParams)[i] = EncodeCoarseFaceParam(i, edgeFlag);
+        }
+        return;
+    }
     // generate triangle index buffer
 
     int const * numVertsPtr = _topology->GetFaceVertexCounts().cdata();
