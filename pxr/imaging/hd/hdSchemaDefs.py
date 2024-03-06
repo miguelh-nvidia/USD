@@ -147,9 +147,7 @@
     dict(
         SCHEMA_NAME = 'MeshTopology',
         SCHEMA_TOKEN = 'topology',
-        SCHEMA_INCLUDES = [
-            '{{LIBRARY_PATH}}/subdivisionTagsSchema',
-        ],
+        SCHEMA_INCLUDES = ['{{LIBRARY_PATH}}/subdivisionTagsSchema'],
         MEMBERS = [
             ('faceVertexCounts', T_INTARRAY, {}),
             ('faceVertexIndices', T_INTARRAY, {}),
