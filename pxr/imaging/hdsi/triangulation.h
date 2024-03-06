@@ -1,202 +1,49 @@
-#ifndef TRIANGULATION_H_
-#define TRIANGULATION_H_
-
-#include <stack>
+#ifndef PXR_IMAGING_HDSI_TRIANGULATION_H
+#define PXR_IMAGING_HDSI_TRIANGULATION_H
 
 #include <pxr/pxr.h>
 
 #include <pxr/base/vt/array.h>
-#include <pxr/base/gf/vec2f.h>
 #include <pxr/base/gf/vec3f.h>
 #include <pxr/base/gf/vec3i.h>
-#include <pxr/base/gf/plane.h>
 
 #include <pxr/usd/usdGeom/mesh.h>
+#include <pxr/imaging/hd/meshTessellation.h>
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-// Point2D
-
-class Point2D
+/// \class FacePoint
+/// A face point is the temporary representation of a point in a face expressed by its adjacency
+/// to its previous and next points. The class will compute all combinations of half planes of
+/// those points in order to compute properties.
+class FacePoint
 {
 public:
-    Point2D(const size_t index, const double x, const double y);
+    /// Creates a face point with vertices (p, q, r). Where \p represents the previous index to \q
+    /// and \r represents the next index to \p.
+    FacePoint(
+        const GfVec3f& p,
+        const GfVec3f& q,
+        const GfVec3f& r);
 
-    Point2D(const Point2D& other);
+    FacePoint(FacePoint const& other);
 
-    Point2D();
+    /// Computes the distance to the half plane <q, p, r> and checks whether the distance is
+    /// positive or negative.
+    bool HasSameOrientation(const FacePoint& other) const;
 
-    double Cross(const Point2D& other) const;
+    /// Whether the point is one of the points consisting this FacePoint.
+    bool HasPoint(const GfVec3f& point) const;
 
-    friend bool operator <(const Point2D& lhs, const Point2D& rhs);
-
-    friend bool operator ==(const Point2D& lhs, const Point2D& rhs);
-public:
-    size_t index;
-    double x;
-    double y;
-};
-
-
-enum class Turn {
-    COLLINEAR,
-    CLOCKWISE,
-    COUNTERCLOCKWISE
-};
-
-
-static
-Turn turn(const Point2D& a, const Point2D& b, const Point2D& c);
-
-static
-bool CCW(const Point2D& a, const Point2D& b, const Point2D& c);
-
-static
-bool CCW(const std::vector<Point2D>& polygon);
-
-// Polygon2D
-
-class Polygon2D
-{
-public:
-    Polygon2D(const std::vector<Point2D>& points);
-
-    Point2D const& Get(const size_t index) const;
-
-    Point2D const& Prev(const size_t index) const;
-
-    Point2D const& Next(const size_t index) const;
-
-    std::tuple<size_t, size_t> AddDiagonal(const size_t i, const size_t j);
-
-    void GetPolygons(std::vector<std::vector<Point2D>>& polygons) const;
+    /// Computes three half planes <q, p, r>; <p, q, r>; <r, p, q> and checks whether a point lies
+    /// in all of the three planes. Equivalent to find if a point lies within a triangle.
+    bool ContainsPoint(const GfVec3f& s) const;
 private:
-    const std::vector<Point2D>& points;
-    std::vector<size_t> indices;
-    std::vector<size_t> prev;
-    std::vector<size_t> next;
+    GfVec3f _p;
+    GfVec3f _q;
+    GfVec3f _r;
+    GfVec3d _direction;
 };
-
-
-// Segment2D
-
-class Segment2D
-{
-public:
-    Segment2D(const Point2D& p, const Point2D& q);
-
-    Segment2D(const Segment2D& other);
-
-    friend bool operator <(const Segment2D& lhs, const Segment2D& rhs);
-
-    friend bool operator ==(const Segment2D& lhs, const Segment2D& rhs);
-public:
-    Point2D p;
-    Point2D q;
-private:
-    bool IsVertical() const;
-};
-
-
-// MonotoneTriangulation
-
-class MonotoneTriangulation
-{
-public:
-    MonotoneTriangulation(const std::vector<Point2D>& polygon);
-
-    void triangulate(std::vector<Point2D>& result) const;
-private:
-    const std::vector<Point2D>& polygon;
-};
-
-// SweepLineEvent
-
-class SweepLineEvent
-{
-public:
-    SweepLineEvent(
-        const size_t index,
-        const Point2D& prev,
-        const Point2D& curr,
-        const Point2D& next,
-        const bool polygon_ccw);
-
-    SweepLineEvent(const SweepLineEvent& other);
-
-    size_t GetIndex() const;
-
-    bool IsStart() const;
-
-    bool IsSplit() const;
-
-    bool IsEnd() const;
-
-    bool IsMerge() const;
-
-    bool IsPolygonAbove() const;
-
-    Segment2D const& GetAbove() const;
-
-    Segment2D const& GetBelow() const;
-
-    Segment2D const& GetLeft() const;
-
-    Segment2D const& GetRight() const;
-
-    friend bool operator <(const SweepLineEvent& lhs, const SweepLineEvent& rhs);
-
-private:
-    size_t index;
-    Point2D prev;
-    Point2D curr;
-    Point2D next;
-    bool polygon_ccw;
-    bool event_ccw;
-    Segment2D prev_segment;
-    Segment2D next_segment;
-};
-
-// Segment2DHelper
-
-class Segment2DHelper
-{
-public:
-    Segment2DHelper(const Segment2D& segment);
-
-    Segment2DHelper(const Segment2D& segment, const size_t index, const bool merge);
-
-    friend bool operator <(const Segment2DHelper& lhs, const Segment2DHelper& rhs);
-public:
-    const Segment2D segment;
-    mutable size_t index;
-    mutable bool merge;
-};
-
-// SweepLine2D
-
-class SweepLine2D
-{
-public:
-    SweepLine2D(const std::vector<Point2D>& points);
-
-    void Sweep(std::vector<std::vector<Point2D>>& result) const;
-private:
-    size_t GetIndex(Polygon2D& polygon, const size_t index, const size_t index_copy, const Segment2D& segment) const;
-
-    void HandleStart(const SweepLineEvent& event, Polygon2D& polygon, std::set<Segment2DHelper>& segments) const;
-
-    void HandleSplit(const SweepLineEvent& event, Polygon2D& polygon, std::set<Segment2DHelper>& segments) const;
-
-    void HandleEnd(const SweepLineEvent& event, Polygon2D& polygon, std::set<Segment2DHelper>& segments) const;
-
-    void HandleMerge(const SweepLineEvent& event, Polygon2D& polygon, std::set<Segment2DHelper>& segments) const;
-
-    void HandleRegular(const SweepLineEvent& event, Polygon2D& polygon, std::set<Segment2DHelper>& segments) const;
-private:
-    const std::vector<Point2D>& points;
-};
-
 
 /// \class Face
 /// A face is a representation of a Face in a Mesh. It consist of single public method: FanTriangulate.
@@ -209,41 +56,49 @@ public:
         const size_t indexStart,
         const size_t vertexCount);
 
-    bool Triangulate(VtVec3iArray& indices, VtIntArray& flags) const;
+    /// Returns true if it is possible to triangulate a face, false otherwise.
+    /// If it is possible it will return an array of order and faces to replace.
+    bool Triangulate(VtIntArray& order, VtIntArray& faces) const;
 private:
     size_t size() const
     {
-        return vertexCount;
+        return _vertexCount;
     }
 
-    size_t const index(const size_t idx) const
+    GfVec3f const& operator[](const size_t index) const
     {
-        return indices[indexStart + idx];
-    }
-
-    GfVec3f const& operator[](const size_t idx) const
-    {
-        return points[index(idx)];
+        size_t offset = _indices[_indexStart + index];
+        return _points[offset];
     }
 
     bool IsValid() const
     {
-        return vertexCount >= 3;
+        return _vertexCount >= 3;
     }
+
+    FacePoint GetReferencePoint() const;
 
     /// Returns true if the current face is a convex shape, false otherwise.
     /// Checking if a face is convex is a linear operation and if it is convex,
     /// the original indices and faces will not suffer modifications.
     bool IsConvex() const;
 
-    int TriangulateFlag(const size_t p, const size_t q, const size_t r) const;
+    /// Returns true if the current face is a star shaped, false otherwise.
+    /// A polygon is star shaped if there is at least one point in the polygon from which all points are visible.
+    /// Checking if a face is star shaped is a linear operation and if it is star shaped,
+    /// the original indices will be shifted upon triangulation
+    bool IsStarShaped(const FacePoint& reference, size_t& index) const;
 
-    void FanTriangulate(VtVec3iArray& indices, VtIntArray& flags) const;
+    /// Returns true if the current face was successfully ear clipped, false otherwise.
+    /// A simple polygon should be able to triangulate. This will modify all indices and face counts.
+    /// This implementation is O(n * r) where r are the number of concave vertices.
+    bool IsEarClipping(const FacePoint& reference, VtIntArray& indices, VtIntArray& faceCount) const;
+
 private:
-    const VtVec3fArray& points;
-    const VtIntArray& indices;
-    const size_t indexStart;
-    const size_t vertexCount;
+    const VtVec3fArray _points;
+    const VtIntArray _indices;
+    const size_t _indexStart;
+    const size_t _vertexCount;
 };
 
 /// \class Triangulation
@@ -256,20 +111,19 @@ public:
         const VtIntArray& indices,
         const VtIntArray& vertexCount);
 
-    bool Triangulate();
+    void Triangulate();
 
-    void GetIndices(VtVec3iArray& outIndices) const;
-
-    void GetFlags(VtIntArray& outFlags) const;
+    const HdMeshTessellations& GetTessellations() const
+    {
+        return _tessellations;
+    }
 private:
     const VtVec3fArray _points;
     const VtIntArray _indices;
     const VtIntArray _vertexCount;
-
-    VtVec3iArray _triangulationIndices;
-    VtIntArray _triangulationFlags;
+    HdMeshTessellations _tessellations;
 };
 
 PXR_NAMESPACE_CLOSE_SCOPE
 
-#endif // TRIANGULATION_H_
+#endif // PXR_IMAGING_HDSI_TRIANGULATION_H

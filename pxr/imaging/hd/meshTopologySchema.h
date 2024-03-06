@@ -39,7 +39,6 @@
 
 #include "pxr/imaging/hd/api.h"
 #include "pxr/imaging/hd/subdivisionTagsSchema.h"
-#include "pxr/imaging/hd/meshTriangulationSchema.h"
 
 #include "pxr/imaging/hd/schema.h"
 
@@ -57,7 +56,6 @@ PXR_NAMESPACE_OPEN_SCOPE
     (faceVertexIndices) \
     (holeIndices) \
     (orientation) \
-    (triangulation) \
     (leftHanded) \
     (rightHanded) \
 
@@ -103,10 +101,7 @@ public:
     HdIntArrayDataSourceHandle GetHoleIndices();
 
     HD_API
-    HdTokenDataSourceHandle GetOrientation();
-
-    HD_API
-    HdMeshTriangulationSchema GetTriangulation(); 
+    HdTokenDataSourceHandle GetOrientation(); 
 
     /// @}
 
@@ -141,8 +136,7 @@ public:
         const HdIntArrayDataSourceHandle &faceVertexCounts,
         const HdIntArrayDataSourceHandle &faceVertexIndices,
         const HdIntArrayDataSourceHandle &holeIndices,
-        const HdTokenDataSourceHandle &orientation,
-        const HdContainerDataSourceHandle &triangulation
+        const HdTokenDataSourceHandle &orientation
     );
 
     /// \class HdMeshTopologySchema::Builder
@@ -166,9 +160,6 @@ public:
         HD_API
         Builder &SetOrientation(
             const HdTokenDataSourceHandle &orientation);
-        HD_API
-        Builder &SetTriangulation(
-            const HdContainerDataSourceHandle &triangulation);
 
         /// Returns a container data source containing the members set thus far.
         HD_API
@@ -179,7 +170,6 @@ public:
         HdIntArrayDataSourceHandle _faceVertexIndices;
         HdIntArrayDataSourceHandle _holeIndices;
         HdTokenDataSourceHandle _orientation;
-        HdContainerDataSourceHandle _triangulation;
 
     };
 

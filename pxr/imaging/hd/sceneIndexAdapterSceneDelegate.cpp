@@ -459,14 +459,22 @@ HdSceneIndexAdapterSceneDelegate::GetMeshTopology(SdfPath const &id)
         faceVertexIndicesDataSource->GetTypedValue(0.0f),
         holeIndices);
 
-    HdMeshTriangulationSchema meshTriangulationSchema = meshTopologySchema.GetTriangulation();
-    if (meshTriangulationSchema) {
-        meshTopology.SetTriangulation(
-            HdMeshTriangulation(
-                meshTriangulationSchema.GetTriangleIndices()->GetTypedValue(0.0f),
-                meshTriangulationSchema.GetTriangleFlags()->GetTypedValue(0.0f)
-            )
-        );
+    HdMeshTessellationsSchema meshTessellations = meshSchema.GetTessellations();
+    if (meshTessellations.IsDefined()) {
+        HdMeshTessellations tessellations;
+        for (const TfToken &name : meshTessellations.GetTessellationNames()) {
+            HdMeshTessellationSchema meshTessellation = meshTessellations.GetTessellation(name);
+            if (!meshTessellation.IsDefined()) {
+                continue;
+            }
+            HdMeshTessellation tessellation = {
+                meshTessellation.GetFaceIndex()->GetTypedValue(0.0f),
+                meshTessellation.GetCounts()->GetTypedValue(0.0f),
+                meshTessellation.GetIndices()->GetTypedValue(0.0f)
+            };
+            tessellations.push_back(tessellation);
+        }
+        meshTopology.SetTessellations(tessellations);
     }
 
     HdGeomSubsetsSchema geomSubsets = meshSchema.GetGeomSubsets();

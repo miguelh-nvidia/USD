@@ -41,6 +41,7 @@
 #include "pxr/imaging/hd/meshTopologySchema.h"
 #include "pxr/imaging/hd/subdivisionTagsSchema.h"
 #include "pxr/imaging/hd/geomSubsetsSchema.h"
+#include "pxr/imaging/hd/meshTessellationsSchema.h"
 
 #include "pxr/imaging/hd/schema.h"
 
@@ -59,6 +60,7 @@ PXR_NAMESPACE_OPEN_SCOPE
     (subdivisionTags) \
     (geomSubsets) \
     (doubleSided) \
+    (tessellations) \
 
 TF_DECLARE_PUBLIC_TOKENS(HdMeshSchemaTokens, HD_API,
     HD_MESH_SCHEMA_TOKENS);
@@ -105,7 +107,10 @@ public:
     HdGeomSubsetsSchema GetGeomSubsets();
 
     HD_API
-    HdBoolDataSourceHandle GetDoubleSided(); 
+    HdBoolDataSourceHandle GetDoubleSided();
+
+    HD_API
+    HdMeshTessellationsSchema GetTessellations(); 
 
     /// @}
 
@@ -152,6 +157,10 @@ public:
     /// Prim-level relative data source locator to locate doubleSided.
     HD_API
     static const HdDataSourceLocator &GetDoubleSidedLocator();
+
+    /// Prim-level relative data source locator to locate tessellations.
+    HD_API
+    static const HdDataSourceLocator &GetTessellationsLocator();
     /// @} 
 
     /// \name Schema construction
@@ -171,7 +180,8 @@ public:
         const HdTokenDataSourceHandle &subdivisionScheme,
         const HdContainerDataSourceHandle &subdivisionTags,
         const HdContainerDataSourceHandle &geomSubsets,
-        const HdBoolDataSourceHandle &doubleSided
+        const HdBoolDataSourceHandle &doubleSided,
+        const HdContainerDataSourceHandle &tessellations
     );
 
     /// \class HdMeshSchema::Builder
@@ -198,6 +208,9 @@ public:
         HD_API
         Builder &SetDoubleSided(
             const HdBoolDataSourceHandle &doubleSided);
+        HD_API
+        Builder &SetTessellations(
+            const HdContainerDataSourceHandle &tessellations);
 
         /// Returns a container data source containing the members set thus far.
         HD_API
@@ -209,6 +222,7 @@ public:
         HdContainerDataSourceHandle _subdivisionTags;
         HdContainerDataSourceHandle _geomSubsets;
         HdBoolDataSourceHandle _doubleSided;
+        HdContainerDataSourceHandle _tessellations;
 
     };
 

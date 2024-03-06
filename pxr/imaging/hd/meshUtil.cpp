@@ -91,23 +91,6 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
         TF_CODING_ERROR("No output buffer provided for triangulation");
         return;
     }
-    if (_topology->GetTriangulation().IsValid()) 
-    {
-        const VtVec3iArray& srcIndices = _topology->GetTriangulation().indices;
-        const VtIntArray& srcFlags = _topology->GetTriangulation().flags;
-        indices->resize(srcIndices.size());
-        primitiveParams->resize(srcIndices.size());
-        for (size_t i=0; i < srcIndices.size(); ++i)
-        {
-            GfVec3i srcIndex = srcIndices[i];
-            GfVec3i &index = (*indices)[i];
-            index.Set(srcIndex[0], srcIndex[1], srcIndex[2]);
-
-            const int edgeFlag = srcFlags[i];
-            (*primitiveParams)[i] = EncodeCoarseFaceParam(i, edgeFlag);
-        }
-        return;
-    }
     // generate triangle index buffer
 
     int const * numVertsPtr = _topology->GetFaceVertexCounts().cdata();
@@ -147,6 +130,9 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
     // reset holeIndex
     holeIndex = 0;
 
+    const HdMeshTessellations & tessellations = _topology->GetTessellations();
+    const int numTessellations = _topology->GetTessellations().size();
+    int tessellationIndex = 0;
     // i  -> authored face index [0, numFaces)
     // tv -> triangulated face index [0, numTris)
     // v  -> index to the first vertex (index) for face i
@@ -158,6 +144,22 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
         } else if (holeIndex < numHoleFaces && holeFacesPtr[holeIndex] == i) {
             // Skip hole faces.
             ++holeIndex;
+        } else if (tessellationIndex < numTessellations && tessellations[tessellationIndex].faceIndex == i) {
+            // Custom tessellation.
+            VtVec3iArray triangles;
+            VtIntArray flags;
+            tessellations[tessellationIndex].ComputeTriangles(triangles, flags);
+            int edgeIndex = ev;
+            for (int j = 0; j < triangles.size(); ++j)
+            {
+                (*indices)[tv] = triangles[j];
+                (*primitiveParams)[tv] = EncodeCoarseFaceParam(i, flags[j]);
+                if (edgeIndices) {
+                    (*edgeIndices)[tv] = ++edgeIndex;
+                }
+                ++tv;
+            }
+            ++tessellationIndex;
         } else {
             // edgeFlag is used for inner-line removal of non-triangle
             // faces on wireframe shading.

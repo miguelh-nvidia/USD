@@ -2,7 +2,7 @@
 
 #include "pxr/imaging/hd/meshSchema.h"
 #include "pxr/imaging/hd/meshTopologySchema.h"
-#include "pxr/imaging/hd/meshTriangulationSchema.h"
+#include "pxr/imaging/hd/meshTessellationsSchema.h"
 #include "pxr/imaging/hd/primvarSchema.h"
 #include "pxr/imaging/hd/primvarsSchema.h"
 #include "pxr/imaging/hd/tokens.h"
@@ -69,11 +69,8 @@ void TriangulationSceneIndex::_PrimsAdded(
         HdMeshSchema meshSchema = HdMeshSchema::GetFromParent(sceneIndexPrim.dataSource);
         HdPrimvarsSchema primvarsSchema = HdPrimvarsSchema::GetFromParent(sceneIndexPrim.dataSource);
 
-        auto faceVertexCountsDataSource = meshSchema.GetTopology().GetFaceVertexCounts();
-        auto faceVertexCounts = faceVertexCountsDataSource->GetTypedValue(0.0f);
-
-        auto faceVertexIndicesDataSource = meshSchema.GetTopology().GetFaceVertexIndices();
-        auto faceVertexIndices = faceVertexIndicesDataSource->GetTypedValue(0.0f);
+        auto faceVertexCounts = meshSchema.GetTopology().GetFaceVertexCounts();
+        auto faceVertexIndices = meshSchema.GetTopology().GetFaceVertexIndices();
 
         auto primvarSchema = primvarsSchema.GetPrimvar(TfToken("points"));
         auto pointsDataSource = primvarSchema.GetPrimvarValue();
@@ -84,31 +81,40 @@ void TriangulationSceneIndex::_PrimsAdded(
         VtValue pointsTmp = VtValue::Cast<VtVec3fArray>(pointsValue);
         VtVec3fArray points = pointsTmp.UncheckedGet<VtVec3fArray>();
 
-        Triangulation triangulation(points, faceVertexIndices, faceVertexCounts);
+        Triangulation triangulation(
+            points, 
+            faceVertexIndices->GetTypedValue(0.0f), 
+            faceVertexCounts->GetTypedValue(0.0f)
+        );
         triangulation.Triangulate();
-        VtIntArray triangulationFlags;
-        VtVec3iArray triangulationIndices;
-        triangulation.GetFlags(triangulationFlags);
-        triangulation.GetIndices(triangulationIndices);
+        std::vector<TfToken> tokens;
+        std::vector<HdDataSourceBaseHandle> tessellations;
+        for (const auto it : triangulation.GetTessellations())
+        {
+            HdMeshTessellationSchema tessellation = 
+                pxr::HdMeshTessellationSchema::Builder()
+                .SetFaceIndex(HdRetainedTypedSampledDataSource<size_t>::New(it.faceIndex))
+                .SetCounts(HdRetainedTypedSampledDataSource<VtIntArray>::New(it.counts))
+                .SetIndices(HdRetainedTypedSampledDataSource<VtIntArray>::New(it.indices))
+                .Build();
+            tokens.push_back(TfToken("Tessellation" + std::to_string(it.faceIndex)));
+            tessellations.push_back(tessellation.GetContainer());
+        }
 
         HdMeshSchema meshSchemaCopy =
             pxr::HdMeshSchema::Builder()
-            .SetTopology(pxr::HdMeshTopologySchema::Builder()
-                .SetFaceVertexCounts(meshSchema.GetTopology().GetFaceVertexCounts())
-                .SetFaceVertexIndices(meshSchema.GetTopology().GetFaceVertexIndices())
-                .SetHoleIndices(meshSchema.GetTopology().GetHoleIndices())
-                .SetOrientation(meshSchema.GetTopology().GetOrientation())
-                .SetTriangulation(
-                    pxr::HdMeshTriangulationSchema::Builder()
-                    .SetTriangleFlags(HdRetainedTypedSampledDataSource<VtIntArray>::New(triangulationFlags))
-                    .SetTriangleIndices(HdRetainedTypedSampledDataSource<VtVec3iArray>::New(triangulationIndices))
-                    .Build()
-                )
-                .Build())
+            .SetTopology(meshSchema.GetTopology().GetContainer())
             .SetSubdivisionScheme(meshSchema.GetSubdivisionScheme())
             .SetSubdivisionTags(meshSchema.GetSubdivisionTags().GetContainer())
             .SetGeomSubsets(meshSchema.GetGeomSubsets().GetContainer())
             .SetDoubleSided(meshSchema.GetDoubleSided())
+            .SetTessellations(
+                pxr::HdMeshTessellationsSchema::BuildRetained(
+                    tessellations.size(),
+                    tokens.data(),
+                    tessellations.data()
+                )
+            )
             .Build();
 
         HdSceneIndexPrim prim;

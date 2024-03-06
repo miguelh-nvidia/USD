@@ -32,8 +32,8 @@
 /* **                                                                      ** */
 /* ************************************************************************** */
 
-#ifndef PXR_IMAGING_HD_MESH_TRIANGULATION_SCHEMA_H
-#define PXR_IMAGING_HD_MESH_TRIANGULATION_SCHEMA_H
+#ifndef PXR_IMAGING_HD_MESH_TESSELLATION_SCHEMA_H
+#define PXR_IMAGING_HD_MESH_TESSELLATION_SCHEMA_H
 
 /// \file
 
@@ -49,34 +49,25 @@ PXR_NAMESPACE_OPEN_SCOPE
 // --(BEGIN CUSTOM CODE: Declares)--
 // --(END CUSTOM CODE: Declares)--
 
-#define HD_MESH_TRIANGULATION_SCHEMA_TOKENS \
-    (triangulation) \
-    (triangleIndices) \
-    (triangleFlags) \
+#define HD_MESH_TESSELLATION_SCHEMA_TOKENS \
+    (faceIndex) \
+    (counts) \
+    (indices) \
 
-TF_DECLARE_PUBLIC_TOKENS(HdMeshTriangulationSchemaTokens, HD_API,
-    HD_MESH_TRIANGULATION_SCHEMA_TOKENS);
+TF_DECLARE_PUBLIC_TOKENS(HdMeshTessellationSchemaTokens, HD_API,
+    HD_MESH_TESSELLATION_SCHEMA_TOKENS);
 
 //-----------------------------------------------------------------------------
 
 
-class HdMeshTriangulationSchema : public HdSchema
+class HdMeshTessellationSchema : public HdSchema
 {
 public:
     /// \name Schema retrieval
     /// @{
 
-    HdMeshTriangulationSchema(HdContainerDataSourceHandle container)
+    HdMeshTessellationSchema(HdContainerDataSourceHandle container)
       : HdSchema(container) {}
-
-    /// Retrieves a container data source with the schema's default name token
-    /// "triangulation" from the parent container and constructs a
-    /// HdMeshTriangulationSchema instance.
-    /// Because the requested container data source may not exist, the result
-    /// should be checked with IsDefined() or a bool comparison before use.
-    HD_API
-    static HdMeshTriangulationSchema GetFromParent(
-        const HdContainerDataSourceHandle &fromParentContainer);
 
     /// @}
 
@@ -87,25 +78,13 @@ public:
     /// @{
 
     HD_API
-    HdVec3iArrayDataSourceHandle GetTriangleIndices();
+    HdSizetDataSourceHandle GetFaceIndex();
 
     HD_API
-    HdIntArrayDataSourceHandle GetTriangleFlags(); 
+    HdIntArrayDataSourceHandle GetCounts();
 
-    /// @}
-
-    /// \name Schema location
-    /// @{
-
-    /// Returns a token where the container representing this schema is found in
-    /// a container by default.
     HD_API
-    static const TfToken &GetSchemaToken();
-
-    /// Returns an HdDataSourceLocator (relative to the prim-level data source)
-    /// where the container representing this schema is found by default.
-    HD_API
-    static const HdDataSourceLocator &GetDefaultLocator();
+    HdIntArrayDataSourceHandle GetIndices(); 
 
     /// @} 
 
@@ -122,11 +101,12 @@ public:
     HD_API
     static HdContainerDataSourceHandle
     BuildRetained(
-        const HdVec3iArrayDataSourceHandle &triangleIndices,
-        const HdIntArrayDataSourceHandle &triangleFlags
+        const HdSizetDataSourceHandle &faceIndex,
+        const HdIntArrayDataSourceHandle &counts,
+        const HdIntArrayDataSourceHandle &indices
     );
 
-    /// \class HdMeshTriangulationSchema::Builder
+    /// \class HdMeshTessellationSchema::Builder
     /// 
     /// Utility class for setting sparse sets of child data source fields to be
     /// filled as arguments into BuildRetained. Because all setter methods
@@ -136,19 +116,23 @@ public:
     {
     public:
         HD_API
-        Builder &SetTriangleIndices(
-            const HdVec3iArrayDataSourceHandle &triangleIndices);
+        Builder &SetFaceIndex(
+            const HdSizetDataSourceHandle &faceIndex);
         HD_API
-        Builder &SetTriangleFlags(
-            const HdIntArrayDataSourceHandle &triangleFlags);
+        Builder &SetCounts(
+            const HdIntArrayDataSourceHandle &counts);
+        HD_API
+        Builder &SetIndices(
+            const HdIntArrayDataSourceHandle &indices);
 
         /// Returns a container data source containing the members set thus far.
         HD_API
         HdContainerDataSourceHandle Build();
 
     private:
-        HdVec3iArrayDataSourceHandle _triangleIndices;
-        HdIntArrayDataSourceHandle _triangleFlags;
+        HdSizetDataSourceHandle _faceIndex;
+        HdIntArrayDataSourceHandle _counts;
+        HdIntArrayDataSourceHandle _indices;
 
     };
 

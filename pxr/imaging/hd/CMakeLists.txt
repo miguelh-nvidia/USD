@@ -118,10 +118,11 @@ pxr_library(hd
         mergingSceneIndex
         mesh
         meshSchema
+        meshTessellation
+        meshTessellationSchema
+        meshTessellationsSchema
         meshTopology
         meshTopologySchema
-        meshTriangulation
-        meshTriangulationSchema
         meshUtil
         noticeBatchingSceneIndex
         nurbsCurvesSchema

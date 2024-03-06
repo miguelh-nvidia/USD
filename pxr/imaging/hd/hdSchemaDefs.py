@@ -105,7 +105,8 @@
         SCHEMA_INCLUDES =
             ['{{LIBRARY_PATH}}/meshTopologySchema',
              '{{LIBRARY_PATH}}/subdivisionTagsSchema',
-             '{{LIBRARY_PATH}}/geomSubsetsSchema'],
+             '{{LIBRARY_PATH}}/geomSubsetsSchema',
+             '{{LIBRARY_PATH}}/meshTessellationsSchema'],
         
         MEMBERS = [
             ('ALL_MEMBERS', '', dict(ADD_LOCATOR = True)),
@@ -114,10 +115,31 @@
             ('subdivisionTags', 'HdSubdivisionTagsSchema', {}),
             ('geomSubsets', 'HdGeomSubsetsSchema', {}),
             ('doubleSided', T_BOOL, {}),
+            ('tessellations', 'HdMeshTessellationsSchema', {}),
         ],
 
         ADD_DEFAULT_LOCATOR = True,
 
+    ),
+
+    #--------------------------------------------------------------------------
+    # meshTessellation
+    dict(
+        SCHEMA_NAME = 'MeshTessellation',
+        MEMBERS = [
+            ('faceIndex', T_SIZET, {}),
+            ('counts', T_INTARRAY, {}),
+            ('indices', T_INTARRAY, {}),
+        ],
+    ),
+
+    #--------------------------------------------------------------------------
+    # meshTessellations
+    dict(
+        SCHEMA_NAME = 'MeshTessellations',
+        SCHEMA_TOKEN = 'tessellation',
+        SCHEMA_INCLUDES = ['{{LIBRARY_PATH}}/meshTessellationSchema'],
+        GENERIC_MEMBER = ('tessellation', 'HdMeshTessellationSchema', {}),
     ),
 
     #--------------------------------------------------------------------------
@@ -127,14 +149,12 @@
         SCHEMA_TOKEN = 'topology',
         SCHEMA_INCLUDES = [
             '{{LIBRARY_PATH}}/subdivisionTagsSchema',
-            '{{LIBRARY_PATH}}/meshTriangulationSchema',
         ],
         MEMBERS = [
             ('faceVertexCounts', T_INTARRAY, {}),
             ('faceVertexIndices', T_INTARRAY, {}),
             ('holeIndices', T_INTARRAY, {}),
             ('orientation', T_TOKEN, {}),
-            ('triangulation', 'HdMeshTriangulationSchema', {}),
         ],
         IMPL_SCHEMA_INCLUDES = ['{{LIBRARY_PATH}}/meshSchema'],
         LOCATOR_PREFIX = 'HdMeshSchema::GetDefaultLocator()',
@@ -143,18 +163,6 @@
         STATIC_TOKEN_DATASOURCE_BUILDERS = [ # optional for shared token ds's
             ('orientation', ['leftHanded', 'rightHanded']),
         ],
-    ),
-
-    #--------------------------------------------------------------------------
-    # meshTriangulation
-    dict(
-        SCHEMA_NAME = 'MeshTriangulation',
-        SCHEMA_TOKEN = 'triangulation',
-        MEMBERS = [
-            ('triangleIndices', T_VEC3IARRAY, {}),
-            ('triangleFlags', T_INTARRAY, {}),
-        ],
-        ADD_DEFAULT_LOCATOR = True,
     ),
 
     #--------------------------------------------------------------------------

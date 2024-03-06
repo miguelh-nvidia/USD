@@ -32,7 +32,7 @@
 /* **                                                                      ** */
 /* ************************************************************************** */
 
-#include "pxr/imaging/hd/meshTriangulationSchema.h"
+#include "pxr/imaging/hd/meshTessellationSchema.h"
 
 #include "pxr/imaging/hd/retainedDataSource.h"
 
@@ -43,100 +43,95 @@
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-TF_DEFINE_PUBLIC_TOKENS(HdMeshTriangulationSchemaTokens,
-    HD_MESH_TRIANGULATION_SCHEMA_TOKENS);
+TF_DEFINE_PUBLIC_TOKENS(HdMeshTessellationSchemaTokens,
+    HD_MESH_TESSELLATION_SCHEMA_TOKENS);
 
 // --(BEGIN CUSTOM CODE: Schema Methods)--
 // --(END CUSTOM CODE: Schema Methods)--
 
-HdVec3iArrayDataSourceHandle
-HdMeshTriangulationSchema::GetTriangleIndices()
+HdSizetDataSourceHandle
+HdMeshTessellationSchema::GetFaceIndex()
 {
-    return _GetTypedDataSource<HdVec3iArrayDataSource>(
-        HdMeshTriangulationSchemaTokens->triangleIndices);
+    return _GetTypedDataSource<HdSizetDataSource>(
+        HdMeshTessellationSchemaTokens->faceIndex);
 }
 
 HdIntArrayDataSourceHandle
-HdMeshTriangulationSchema::GetTriangleFlags()
+HdMeshTessellationSchema::GetCounts()
 {
     return _GetTypedDataSource<HdIntArrayDataSource>(
-        HdMeshTriangulationSchemaTokens->triangleFlags);
+        HdMeshTessellationSchemaTokens->counts);
+}
+
+HdIntArrayDataSourceHandle
+HdMeshTessellationSchema::GetIndices()
+{
+    return _GetTypedDataSource<HdIntArrayDataSource>(
+        HdMeshTessellationSchemaTokens->indices);
 }
 
 /*static*/
 HdContainerDataSourceHandle
-HdMeshTriangulationSchema::BuildRetained(
-        const HdVec3iArrayDataSourceHandle &triangleIndices,
-        const HdIntArrayDataSourceHandle &triangleFlags
+HdMeshTessellationSchema::BuildRetained(
+        const HdSizetDataSourceHandle &faceIndex,
+        const HdIntArrayDataSourceHandle &counts,
+        const HdIntArrayDataSourceHandle &indices
 )
 {
-    TfToken _names[2];
-    HdDataSourceBaseHandle _values[2];
+    TfToken _names[3];
+    HdDataSourceBaseHandle _values[3];
 
     size_t _count = 0;
 
-    if (triangleIndices) {
-        _names[_count] = HdMeshTriangulationSchemaTokens->triangleIndices;
-        _values[_count++] = triangleIndices;
+    if (faceIndex) {
+        _names[_count] = HdMeshTessellationSchemaTokens->faceIndex;
+        _values[_count++] = faceIndex;
     }
 
-    if (triangleFlags) {
-        _names[_count] = HdMeshTriangulationSchemaTokens->triangleFlags;
-        _values[_count++] = triangleFlags;
+    if (counts) {
+        _names[_count] = HdMeshTessellationSchemaTokens->counts;
+        _values[_count++] = counts;
+    }
+
+    if (indices) {
+        _names[_count] = HdMeshTessellationSchemaTokens->indices;
+        _values[_count++] = indices;
     }
     return HdRetainedContainerDataSource::New(_count, _names, _values);
 }
 
-HdMeshTriangulationSchema::Builder &
-HdMeshTriangulationSchema::Builder::SetTriangleIndices(
-    const HdVec3iArrayDataSourceHandle &triangleIndices)
+HdMeshTessellationSchema::Builder &
+HdMeshTessellationSchema::Builder::SetFaceIndex(
+    const HdSizetDataSourceHandle &faceIndex)
 {
-    _triangleIndices = triangleIndices;
+    _faceIndex = faceIndex;
     return *this;
 }
 
-HdMeshTriangulationSchema::Builder &
-HdMeshTriangulationSchema::Builder::SetTriangleFlags(
-    const HdIntArrayDataSourceHandle &triangleFlags)
+HdMeshTessellationSchema::Builder &
+HdMeshTessellationSchema::Builder::SetCounts(
+    const HdIntArrayDataSourceHandle &counts)
 {
-    _triangleFlags = triangleFlags;
+    _counts = counts;
+    return *this;
+}
+
+HdMeshTessellationSchema::Builder &
+HdMeshTessellationSchema::Builder::SetIndices(
+    const HdIntArrayDataSourceHandle &indices)
+{
+    _indices = indices;
     return *this;
 }
 
 HdContainerDataSourceHandle
-HdMeshTriangulationSchema::Builder::Build()
+HdMeshTessellationSchema::Builder::Build()
 {
-    return HdMeshTriangulationSchema::BuildRetained(
-        _triangleIndices,
-        _triangleFlags
+    return HdMeshTessellationSchema::BuildRetained(
+        _faceIndex,
+        _counts,
+        _indices
     );
-}
-
-/*static*/
-HdMeshTriangulationSchema
-HdMeshTriangulationSchema::GetFromParent(
-        const HdContainerDataSourceHandle &fromParentContainer)
-{
-    return HdMeshTriangulationSchema(
-        fromParentContainer
-        ? HdContainerDataSource::Cast(fromParentContainer->Get(
-                HdMeshTriangulationSchemaTokens->triangulation))
-        : nullptr);
-}
-
-/*static*/
-const TfToken &
-HdMeshTriangulationSchema::GetSchemaToken()
-{
-    return HdMeshTriangulationSchemaTokens->triangulation;
-}
-
-/*static*/
-const HdDataSourceLocator &
-HdMeshTriangulationSchema::GetDefaultLocator()
-{
-    static const HdDataSourceLocator locator(GetSchemaToken());
-    return locator;
 } 
 
 PXR_NAMESPACE_CLOSE_SCOPE
