@@ -91,6 +91,7 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
         TF_CODING_ERROR("No output buffer provided for triangulation");
         return;
     }
+
     // generate triangle index buffer
 
     int const * numVertsPtr = _topology->GetFaceVertexCounts().cdata();
