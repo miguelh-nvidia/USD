@@ -131,7 +131,7 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
     // reset holeIndex
     holeIndex = 0;
 
-    const HdMeshTessellations & tessellations = _topology->GetTessellations();
+    const auto & tessellations = _topology->GetTessellations();
     const int numTessellations = _topology->GetTessellations().size();
     int tessellationIndex = 0;
     // i  -> authored face index [0, numFaces)
