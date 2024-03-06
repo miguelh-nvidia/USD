@@ -9,34 +9,48 @@ int IsEdge(
     const int v
 )
 {
-    const auto key = (u < v) ? std::make_pair(u, v) : std::make_pair(v, u);
-    const auto it = edges.find(key);
+    const auto edge = (u < v) ? std::make_pair(u, v) : std::make_pair(v, u);
+    const auto it = edges.find(edge);
     return (it == edges.end()) ? false : it->second == 1;
 }
 
 int EdgeFlag(
     const std::map<std::pair<int, int>, int>& edges, 
-    const GfVec3i& triangle
+    GfVec3i& triangle
 )
 {
-    bool pq = IsEdge(edges, triangle[0], triangle[1]);
-    bool qr = IsEdge(edges, triangle[1], triangle[2]);
-    bool rp = IsEdge(edges, triangle[2], triangle[0]);
-    if (pq && qr && rp) {
-        return 0; // Show all edges
+    const bool p = IsEdge(edges, triangle[0], triangle[1]);
+    const bool q = IsEdge(edges, triangle[1], triangle[2]);
+    const bool r = IsEdge(edges, triangle[2], triangle[0]);
+    // Show all edges
+    if (p && q && r) {
+        return 0;
     }
-    if (pq && qr && !rp) {
+    // One edge is missing
+    if (p && q && !r) {
         return 1; // hide [2-0]
     }
-    if (!pq && qr && rp) {
+    if (!p && q && r) {
         return 2; // hide [0-1]
     }
-    if (!pq && qr && !rp) {
+    if (p && !q && r) {
+        triangle.Set(triangle[1], triangle[2], triangle[0]);
+        return 2;
+    }
+    // Two edges are missing
+    if (!p && q && !r) {
         return 3; // hide [0-1] and [2-0]
     }
-    if (!pq && !qr && !rp) {
-        return 4; // hide all
-    }    
+    if (!p && !q && r) {
+        triangle.Set(triangle[1], triangle[2], triangle[0]);
+        return 3;
+    }
+    if (p && !q && !r) {
+        triangle.Set(triangle[2], triangle[0], triangle[1]);
+        return 3;
+    }
+    // all edges are missing?
+    return 3;
 }
 
 void
@@ -53,8 +67,8 @@ HdMeshTessellation::ComputeTriangles(
         {
             const int u = indices[startIndex + i];
             const int v = indices[startIndex + (i + 1) % count];
-            const auto key = (u < v) ? std::make_pair(u, v) : std::make_pair(v, u);
-            ++edges[key];
+            const auto edge = (u < v) ? std::make_pair(u, v) : std::make_pair(v, u);
+            ++edges[edge];
         }
         startIndex += count;
     }
@@ -69,8 +83,9 @@ HdMeshTessellation::ComputeTriangles(
                 indices[startIndex + i + 1],
                 indices[startIndex + i + 2]
             };
+            const int flag = EdgeFlag(edges, triangle);
             triangles.push_back(triangle);
-            flags.push_back(EdgeFlag(edges, triangle));
+            flags.push_back(flag);
         }
         startIndex += count;
     }
