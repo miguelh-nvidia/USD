@@ -3,7 +3,7 @@
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-int IsEdge(
+bool IsEdge(
     const std::map<std::pair<int, int>, int>& edges, 
     const int u, 
     const int v
@@ -11,7 +11,10 @@ int IsEdge(
 {
     const auto edge = (u < v) ? std::make_pair(u, v) : std::make_pair(v, u);
     const auto it = edges.find(edge);
-    return (it == edges.end()) ? false : it->second == 1;
+    if (it == edges.end()) {
+        return false;
+    }
+    return it->second == 1;
 }
 
 int EdgeFlag(
@@ -60,34 +63,34 @@ HdMeshTessellation::ComputeTriangles(
 {
     std::map<std::pair<int, int>, int> edges;
 
-    int startIndex = 0;
+    int offset = 0;
     for (const auto count : counts)
     {
         for (int i = 0; i < count; ++i)
         {
-            const int u = indices[startIndex + i];
-            const int v = indices[startIndex + (i + 1) % count];
+            const int u = indices[offset + i];
+            const int v = indices[offset + (i + 1) % count];
             const auto edge = (u < v) ? std::make_pair(u, v) : std::make_pair(v, u);
             ++edges[edge];
         }
-        startIndex += count;
+        offset += count;
     }
 
-    startIndex = 0;
+    offset = 0;
     for (const auto count : counts)
     {
         for (int i = 0; i < count - 2; ++i)
         {
             GfVec3i triangle = {
-                indices[startIndex],
-                indices[startIndex + i + 1],
-                indices[startIndex + i + 2]
+                indices[offset],
+                indices[offset + i + 1],
+                indices[offset + i + 2]
             };
             const int flag = EdgeFlag(edges, triangle);
             triangles.push_back(triangle);
             flags.push_back(flag);
         }
-        startIndex += count;
+        offset += count;
     }
 }
 
