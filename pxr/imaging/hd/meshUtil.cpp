@@ -131,9 +131,8 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
     // reset holeIndex
     holeIndex = 0;
 
-    const auto & tessellations = _topology->GetTessellations();
-    const int numTessellations = _topology->GetTessellations().size();
-    int tessellationIndex = 0;
+    const auto & tessellationEnd = _topology->GetTessellations().end();
+    auto & tessellationIt = _topology->GetTessellations().begin();
     // i  -> authored face index [0, numFaces)
     // tv -> triangulated face index [0, numTris)
     // v  -> index to the first vertex (index) for face i
@@ -145,11 +144,11 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
         } else if (holeIndex < numHoleFaces && holeFacesPtr[holeIndex] == i) {
             // Skip hole faces.
             ++holeIndex;
-        } else if (tessellationIndex < numTessellations && tessellations[tessellationIndex].faceIndex == i) {
+        } else if (tessellationIt != tessellationEnd && tessellationIt->faceIndex == i) {
             // Custom tessellation.
             VtVec3iArray triangles;
             VtIntArray flags;
-            tessellations[tessellationIndex].ComputeTriangles(triangles, flags);
+            tessellationIt->ComputeTriangles(triangles, flags);
             int edgeIndex = ev;
             for (int j = 0; j < triangles.size(); ++j)
             {
@@ -160,7 +159,7 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
                 }
                 ++tv;
             }
-            ++tessellationIndex;
+            tessellationIt++;
         } else {
             // edgeFlag is used for inner-line removal of non-triangle
             // faces on wireframe shading.

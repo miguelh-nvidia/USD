@@ -83,12 +83,6 @@ private:
     /// the original indices and faces will not suffer modifications.
     bool IsConvex() const;
 
-    /// Returns true if the current face is a star shaped, false otherwise.
-    /// A polygon is star shaped if there is at least one point in the polygon from which all points are visible.
-    /// Checking if a face is star shaped is a linear operation and if it is star shaped,
-    /// the original indices will be shifted upon triangulation
-    bool IsStarShaped(const FacePoint& reference, size_t& index) const;
-
     /// Returns true if the current face was successfully ear clipped, false otherwise.
     /// A simple polygon should be able to triangulate. This will modify all indices and face counts.
     /// This implementation is O(n * r) where r are the number of concave vertices.

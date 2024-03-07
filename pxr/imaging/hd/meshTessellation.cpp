@@ -3,6 +3,7 @@
 
 PXR_NAMESPACE_OPEN_SCOPE
 
+// Find if an edge(u, v) is found in edges.
 bool IsEdge(
     const std::map<std::pair<int, int>, int>& edges, 
     const int u, 
@@ -17,6 +18,21 @@ bool IsEdge(
     return it->second == 1;
 }
 
+// Given a triangle, returns its edge flag.
+// edgeFlag is used for inner-line removal of non-triangle
+// faces on wireframe shading.
+//
+//          0__                0  0   0__
+//        _/|\ \_            _/.  ..   . \_
+//      _/  | \  \_   ->   _/  .  . .   .  \_
+//     /  A |C \ B \_     /  A .  .C .   . B \_
+//    1-----2---3----4   1-----2  1---2   1----2
+//
+//  Type   EdgeFlag    Draw
+//    -       0        show all edges
+//    A       1        hide [2-0]
+//    B       2        hide [0-1]
+//    C       3        hide [0-1] and [2-0]
 int EdgeFlag(
     const std::map<std::pair<int, int>, int>& edges, 
     GfVec3i& triangle
@@ -56,6 +72,7 @@ int EdgeFlag(
     return 3;
 }
 
+// Given a tessellation of a face, compute the triangulation.
 void
 HdMeshTessellation::ComputeTriangles(
     VtVec3iArray& triangles, VtIntArray& flags

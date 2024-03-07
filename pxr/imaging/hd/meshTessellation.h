@@ -12,17 +12,17 @@ PXR_NAMESPACE_OPEN_SCOPE
 
 /// \class HdMeshTessellation
 ///
-/// TODO
+/// A mesh tessellation is linked to a mesh, they are referenced by faceIndex.
 ///
 struct HdMeshTessellation {
-    /// TODO
+    /// The index of the face this tessellation comes from.
     size_t faceIndex;
-    /// TODO
+    /// The array of counts of tessellation.
     VtIntArray counts;
-    /// TODO
+    /// The array of indices of tessellation.
     VtIntArray indices;
 
-    /// TODO
+    /// Convert this tessellation into triangles.
     void ComputeTriangles(VtVec3iArray& triangles, VtIntArray& flags) const;
 };
 
