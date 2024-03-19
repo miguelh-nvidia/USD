@@ -41,6 +41,7 @@ HdMeshTopology::HdMeshTopology()
  , _invisibleFaces()
  , _refineLevel(0)
  , _numPoints()
+ , _tessellations()
 {
     HD_PERF_COUNTER_INCR(HdPerfTokens->meshTopology);
 }
@@ -54,6 +55,7 @@ HdMeshTopology::HdMeshTopology(const HdMeshTopology &src,
  , _invisibleFaces(src._invisibleFaces)
  , _refineLevel(refineLevel)
  , _numPoints(src._numPoints)
+ , _tessellations(src._tessellations)
 {
     HD_PERF_COUNTER_INCR(HdPerfTokens->meshTopology);
 }
@@ -66,6 +68,7 @@ HdMeshTopology::HdMeshTopology(const PxOsdMeshTopology &topo,
  , _invisibleFaces()
  , _refineLevel(refineLevel)
  , _numPoints()
+ , _tessellations()
 {
     HD_PERF_COUNTER_INCR(HdPerfTokens->meshTopology);
     _numPoints = HdMeshTopology::ComputeNumPoints(
@@ -86,6 +89,7 @@ HdMeshTopology::HdMeshTopology(const TfToken &scheme,
  , _invisibleFaces()
  , _refineLevel(refineLevel)
  , _numPoints()
+ , _tessellations()
 {
     HD_PERF_COUNTER_INCR(HdPerfTokens->meshTopology);
     _numPoints = HdMeshTopology::ComputeNumPoints(
@@ -108,6 +112,7 @@ HdMeshTopology::HdMeshTopology(const TfToken &scheme,
  , _invisibleFaces()
  , _refineLevel(refineLevel)
  , _numPoints()
+ , _tessellations()
 {
     HD_PERF_COUNTER_INCR(HdPerfTokens->meshTopology);
     _numPoints = HdMeshTopology::ComputeNumPoints(
@@ -130,6 +135,7 @@ HdMeshTopology::operator =(const HdMeshTopology &copy)
     _numPoints       = copy._numPoints;
     _invisiblePoints = copy._invisiblePoints;
     _invisibleFaces  = copy._invisibleFaces;
+    _tessellations   = copy._tessellations;
 
     return *this;
 }
@@ -149,7 +155,8 @@ HdMeshTopology::operator==(HdMeshTopology const &other) const {
         && (_geomSubsets == other._geomSubsets)
         && (_invisiblePoints == other._invisiblePoints)
         && (_invisibleFaces == other._invisibleFaces)
-        && (_refineLevel == other._refineLevel);
+        && (_refineLevel == other._refineLevel)
+        && (_tessellations == other._tessellations);
     // Don't compare _numPoints, since it is derived from _topology.
 }
 

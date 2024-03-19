@@ -84,6 +84,13 @@ HdMeshSchema::GetDoubleSided()
         HdMeshSchemaTokens->doubleSided);
 }
 
+HdMeshTessellationsSchema
+HdMeshSchema::GetTessellations()
+{
+    return HdMeshTessellationsSchema(_GetTypedDataSource<HdContainerDataSource>(
+        HdMeshSchemaTokens->tessellations));
+}
+
 /*static*/
 HdContainerDataSourceHandle
 HdMeshSchema::BuildRetained(
@@ -91,11 +98,12 @@ HdMeshSchema::BuildRetained(
         const HdTokenDataSourceHandle &subdivisionScheme,
         const HdContainerDataSourceHandle &subdivisionTags,
         const HdContainerDataSourceHandle &geomSubsets,
-        const HdBoolDataSourceHandle &doubleSided
+        const HdBoolDataSourceHandle &doubleSided,
+        const HdContainerDataSourceHandle &tessellations
 )
 {
-    TfToken _names[5];
-    HdDataSourceBaseHandle _values[5];
+    TfToken _names[6];
+    HdDataSourceBaseHandle _values[6];
 
     size_t _count = 0;
 
@@ -122,6 +130,11 @@ HdMeshSchema::BuildRetained(
     if (doubleSided) {
         _names[_count] = HdMeshSchemaTokens->doubleSided;
         _values[_count++] = doubleSided;
+    }
+
+    if (tessellations) {
+        _names[_count] = HdMeshSchemaTokens->tessellations;
+        _values[_count++] = tessellations;
     }
     return HdRetainedContainerDataSource::New(_count, _names, _values);
 }
@@ -166,6 +179,14 @@ HdMeshSchema::Builder::SetDoubleSided(
     return *this;
 }
 
+HdMeshSchema::Builder &
+HdMeshSchema::Builder::SetTessellations(
+    const HdContainerDataSourceHandle &tessellations)
+{
+    _tessellations = tessellations;
+    return *this;
+}
+
 HdContainerDataSourceHandle
 HdMeshSchema::Builder::Build()
 {
@@ -174,7 +195,8 @@ HdMeshSchema::Builder::Build()
         _subdivisionScheme,
         _subdivisionTags,
         _geomSubsets,
-        _doubleSided
+        _doubleSided,
+        _tessellations
     );
 }
 
@@ -252,6 +274,16 @@ HdMeshSchema::GetDoubleSidedLocator()
     static const HdDataSourceLocator locator =
         GetDefaultLocator().Append(
             HdMeshSchemaTokens->doubleSided);
+    return locator;
+}
+
+/* static */
+const HdDataSourceLocator &
+HdMeshSchema::GetTessellationsLocator()
+{
+    static const HdDataSourceLocator locator =
+        GetDefaultLocator().Append(
+            HdMeshSchemaTokens->tessellations);
     return locator;
 } 
 

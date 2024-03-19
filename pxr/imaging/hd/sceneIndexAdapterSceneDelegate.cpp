@@ -79,6 +79,8 @@
 #include "pxr/imaging/hd/materialNodeParameterSchema.h"
 #include "pxr/imaging/hd/materialSchema.h"
 #include "pxr/imaging/hd/meshSchema.h"
+#include "pxr/imaging/hd/meshTessellations.h"
+#include "pxr/imaging/hd/meshTessellationsSchema.h"
 #include "pxr/imaging/hd/meshTopologySchema.h"
 #include "pxr/imaging/hd/primvarSchema.h"
 #include "pxr/imaging/hd/primvarsSchema.h"
@@ -457,6 +459,17 @@ HdSceneIndexAdapterSceneDelegate::GetMeshTopology(SdfPath const &id)
         faceVertexCountsDataSource->GetTypedValue(0.0f),
         faceVertexIndicesDataSource->GetTypedValue(0.0f),
         holeIndices);
+
+    HdMeshTessellationsSchema meshTessellations = meshSchema.GetTessellations();
+    if (meshTessellations.IsDefined()) {
+        HdMeshTessellations tessellations = {
+            meshTessellations.GetFaceIndices()->GetTypedValue(0.0f),
+            meshTessellations.GetFaceTessellations()->GetTypedValue(0.0f),
+            meshTessellations.GetTessellationVertexCounts()->GetTypedValue(0.0f),
+            meshTessellations.GetTessellationVertexIndices()->GetTypedValue(0.0f)
+        };
+        meshTopology.SetTessellations(tessellations);
+    }
 
     HdGeomSubsetsSchema geomSubsets = meshSchema.GetGeomSubsets();
     if (geomSubsets.IsDefined()) {

@@ -105,7 +105,8 @@
         SCHEMA_INCLUDES =
             ['{{LIBRARY_PATH}}/meshTopologySchema',
              '{{LIBRARY_PATH}}/subdivisionTagsSchema',
-             '{{LIBRARY_PATH}}/geomSubsetsSchema'],
+             '{{LIBRARY_PATH}}/geomSubsetsSchema',
+             '{{LIBRARY_PATH}}/meshTessellationsSchema'],
         
         MEMBERS = [
             ('ALL_MEMBERS', '', dict(ADD_LOCATOR = True)),
@@ -114,10 +115,24 @@
             ('subdivisionTags', 'HdSubdivisionTagsSchema', {}),
             ('geomSubsets', 'HdGeomSubsetsSchema', {}),
             ('doubleSided', T_BOOL, {}),
+            ('tessellations', 'HdMeshTessellationsSchema', {}),
         ],
 
         ADD_DEFAULT_LOCATOR = True,
 
+    ),
+
+    #--------------------------------------------------------------------------
+    # meshTessellations
+    dict(
+        SCHEMA_NAME = 'MeshTessellations',
+        SCHEMA_TOKEN = 'tessellations',
+        MEMBERS = [
+            ('faceIndices', T_INTARRAY, {}),
+            ('faceTessellations', T_INTARRAY, {}),
+            ('tessellationVertexCounts', T_INTARRAY, {}),
+            ('tessellationVertexIndices', T_INTARRAY, {}),
+        ],
     ),
 
     #--------------------------------------------------------------------------

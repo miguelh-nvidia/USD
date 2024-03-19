@@ -31,6 +31,10 @@ pxr_library(hdsi
         renderSettingsFilteringSceneIndex
         sceneGlobalsSceneIndex
         tetMeshConversionSceneIndex
+        triangulationSceneIndex
+
+    PRIVATE_CLASSES
+        triangulation
 
     PUBLIC_HEADERS
         api.h

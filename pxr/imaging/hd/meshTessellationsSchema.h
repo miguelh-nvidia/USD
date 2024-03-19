@@ -32,16 +32,12 @@
 /* **                                                                      ** */
 /* ************************************************************************** */
 
-#ifndef PXR_IMAGING_HD_MESH_SCHEMA_H
-#define PXR_IMAGING_HD_MESH_SCHEMA_H
+#ifndef PXR_IMAGING_HD_MESH_TESSELLATIONS_SCHEMA_H
+#define PXR_IMAGING_HD_MESH_TESSELLATIONS_SCHEMA_H
 
 /// \file
 
 #include "pxr/imaging/hd/api.h"
-#include "pxr/imaging/hd/meshTopologySchema.h"
-#include "pxr/imaging/hd/subdivisionTagsSchema.h"
-#include "pxr/imaging/hd/geomSubsetsSchema.h"
-#include "pxr/imaging/hd/meshTessellationsSchema.h"
 
 #include "pxr/imaging/hd/schema.h"
 
@@ -53,37 +49,35 @@ PXR_NAMESPACE_OPEN_SCOPE
 // --(BEGIN CUSTOM CODE: Declares)--
 // --(END CUSTOM CODE: Declares)--
 
-#define HD_MESH_SCHEMA_TOKENS \
-    (mesh) \
-    (topology) \
-    (subdivisionScheme) \
-    (subdivisionTags) \
-    (geomSubsets) \
-    (doubleSided) \
+#define HD_MESH_TESSELLATIONS_SCHEMA_TOKENS \
     (tessellations) \
+    (faceIndices) \
+    (faceTessellations) \
+    (tessellationVertexCounts) \
+    (tessellationVertexIndices) \
 
-TF_DECLARE_PUBLIC_TOKENS(HdMeshSchemaTokens, HD_API,
-    HD_MESH_SCHEMA_TOKENS);
+TF_DECLARE_PUBLIC_TOKENS(HdMeshTessellationsSchemaTokens, HD_API,
+    HD_MESH_TESSELLATIONS_SCHEMA_TOKENS);
 
 //-----------------------------------------------------------------------------
 
 
-class HdMeshSchema : public HdSchema
+class HdMeshTessellationsSchema : public HdSchema
 {
 public:
     /// \name Schema retrieval
     /// @{
 
-    HdMeshSchema(HdContainerDataSourceHandle container)
+    HdMeshTessellationsSchema(HdContainerDataSourceHandle container)
       : HdSchema(container) {}
 
     /// Retrieves a container data source with the schema's default name token
-    /// "mesh" from the parent container and constructs a
-    /// HdMeshSchema instance.
+    /// "tessellations" from the parent container and constructs a
+    /// HdMeshTessellationsSchema instance.
     /// Because the requested container data source may not exist, the result
     /// should be checked with IsDefined() or a bool comparison before use.
     HD_API
-    static HdMeshSchema GetFromParent(
+    static HdMeshTessellationsSchema GetFromParent(
         const HdContainerDataSourceHandle &fromParentContainer);
 
     /// @}
@@ -95,22 +89,16 @@ public:
     /// @{
 
     HD_API
-    HdMeshTopologySchema GetTopology();
+    HdIntArrayDataSourceHandle GetFaceIndices();
 
     HD_API
-    HdTokenDataSourceHandle GetSubdivisionScheme();
+    HdIntArrayDataSourceHandle GetFaceTessellations();
 
     HD_API
-    HdSubdivisionTagsSchema GetSubdivisionTags();
+    HdIntArrayDataSourceHandle GetTessellationVertexCounts();
 
     HD_API
-    HdGeomSubsetsSchema GetGeomSubsets();
-
-    HD_API
-    HdBoolDataSourceHandle GetDoubleSided();
-
-    HD_API
-    HdMeshTessellationsSchema GetTessellations(); 
+    HdIntArrayDataSourceHandle GetTessellationVertexIndices(); 
 
     /// @}
 
@@ -122,45 +110,6 @@ public:
     HD_API
     static const TfToken &GetSchemaToken();
 
-    /// Returns an HdDataSourceLocator (relative to the prim-level data source)
-    /// where the container representing this schema is found by default.
-    HD_API
-    static const HdDataSourceLocator &GetDefaultLocator();
-
-    /// @}
-
-    /// \name Data source locators for members
-    ///
-    /// The following methods return an HdDataSourceLocator (relative to the
-    /// prim-level data source) where the data source for a member can be found.
-    ///
-    /// This is often useful for checking intersection against the
-    /// HdDataSourceLocatorSet sent with HdDataSourceObserver::PrimsDirtied.
-    /// @{
-
-    /// Prim-level relative data source locator to locate topology.
-    HD_API
-    static const HdDataSourceLocator &GetTopologyLocator();
-
-    /// Prim-level relative data source locator to locate subdivisionScheme.
-    HD_API
-    static const HdDataSourceLocator &GetSubdivisionSchemeLocator();
-
-    /// Prim-level relative data source locator to locate subdivisionTags.
-    HD_API
-    static const HdDataSourceLocator &GetSubdivisionTagsLocator();
-
-    /// Prim-level relative data source locator to locate geomSubsets.
-    HD_API
-    static const HdDataSourceLocator &GetGeomSubsetsLocator();
-
-    /// Prim-level relative data source locator to locate doubleSided.
-    HD_API
-    static const HdDataSourceLocator &GetDoubleSidedLocator();
-
-    /// Prim-level relative data source locator to locate tessellations.
-    HD_API
-    static const HdDataSourceLocator &GetTessellationsLocator();
     /// @} 
 
     /// \name Schema construction
@@ -176,15 +125,13 @@ public:
     HD_API
     static HdContainerDataSourceHandle
     BuildRetained(
-        const HdContainerDataSourceHandle &topology,
-        const HdTokenDataSourceHandle &subdivisionScheme,
-        const HdContainerDataSourceHandle &subdivisionTags,
-        const HdContainerDataSourceHandle &geomSubsets,
-        const HdBoolDataSourceHandle &doubleSided,
-        const HdContainerDataSourceHandle &tessellations
+        const HdIntArrayDataSourceHandle &faceIndices,
+        const HdIntArrayDataSourceHandle &faceTessellations,
+        const HdIntArrayDataSourceHandle &tessellationVertexCounts,
+        const HdIntArrayDataSourceHandle &tessellationVertexIndices
     );
 
-    /// \class HdMeshSchema::Builder
+    /// \class HdMeshTessellationsSchema::Builder
     /// 
     /// Utility class for setting sparse sets of child data source fields to be
     /// filled as arguments into BuildRetained. Because all setter methods
@@ -194,35 +141,27 @@ public:
     {
     public:
         HD_API
-        Builder &SetTopology(
-            const HdContainerDataSourceHandle &topology);
+        Builder &SetFaceIndices(
+            const HdIntArrayDataSourceHandle &faceIndices);
         HD_API
-        Builder &SetSubdivisionScheme(
-            const HdTokenDataSourceHandle &subdivisionScheme);
+        Builder &SetFaceTessellations(
+            const HdIntArrayDataSourceHandle &faceTessellations);
         HD_API
-        Builder &SetSubdivisionTags(
-            const HdContainerDataSourceHandle &subdivisionTags);
+        Builder &SetTessellationVertexCounts(
+            const HdIntArrayDataSourceHandle &tessellationVertexCounts);
         HD_API
-        Builder &SetGeomSubsets(
-            const HdContainerDataSourceHandle &geomSubsets);
-        HD_API
-        Builder &SetDoubleSided(
-            const HdBoolDataSourceHandle &doubleSided);
-        HD_API
-        Builder &SetTessellations(
-            const HdContainerDataSourceHandle &tessellations);
+        Builder &SetTessellationVertexIndices(
+            const HdIntArrayDataSourceHandle &tessellationVertexIndices);
 
         /// Returns a container data source containing the members set thus far.
         HD_API
         HdContainerDataSourceHandle Build();
 
     private:
-        HdContainerDataSourceHandle _topology;
-        HdTokenDataSourceHandle _subdivisionScheme;
-        HdContainerDataSourceHandle _subdivisionTags;
-        HdContainerDataSourceHandle _geomSubsets;
-        HdBoolDataSourceHandle _doubleSided;
-        HdContainerDataSourceHandle _tessellations;
+        HdIntArrayDataSourceHandle _faceIndices;
+        HdIntArrayDataSourceHandle _faceTessellations;
+        HdIntArrayDataSourceHandle _tessellationVertexCounts;
+        HdIntArrayDataSourceHandle _tessellationVertexIndices;
 
     };
 

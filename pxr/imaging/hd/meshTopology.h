@@ -27,6 +27,7 @@
 #include "pxr/pxr.h"
 #include "pxr/imaging/hd/api.h"
 #include "pxr/imaging/hd/geomSubset.h"
+#include "pxr/imaging/hd/meshTessellations.h"
 #include "pxr/imaging/hd/version.h"
 #include "pxr/imaging/hd/topology.h"
 
@@ -212,11 +213,21 @@ public:
     }
     /// @}
 
+    HD_API
+    HdMeshTessellations const & GetTessellations() const {
+        return _tessellations;
+    }
+
+    HD_API
+    void SetTessellations(HdMeshTessellations const& tessellations) {
+        _tessellations = tessellations;
+    }
 protected:
     PxOsdMeshTopology _topology;
     HdGeomSubsets _geomSubsets;
     VtIntArray _invisiblePoints;
     VtIntArray _invisibleFaces;
+    HdMeshTessellations _tessellations;
     int _refineLevel;
     int _numPoints;
 };
