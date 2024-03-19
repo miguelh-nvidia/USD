@@ -8,7 +8,7 @@
 #include <pxr/base/gf/vec3i.h>
 
 #include <pxr/usd/usdGeom/mesh.h>
-#include <pxr/imaging/hd/meshTessellation.h>
+#include <pxr/imaging/hd/meshTessellations.h>
 
 PXR_NAMESPACE_OPEN_SCOPE
 

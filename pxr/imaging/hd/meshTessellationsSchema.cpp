@@ -49,31 +49,111 @@ TF_DEFINE_PUBLIC_TOKENS(HdMeshTessellationsSchemaTokens,
 // --(BEGIN CUSTOM CODE: Schema Methods)--
 // --(END CUSTOM CODE: Schema Methods)--
 
-TfTokenVector
-HdMeshTessellationsSchema::GetTessellationNames()
+HdIntArrayDataSourceHandle
+HdMeshTessellationsSchema::GetFaceIndices()
 {
-    if (_container) {
-        return _container->GetNames();
-    } else {
-        return {};
-    }
+    return _GetTypedDataSource<HdIntArrayDataSource>(
+        HdMeshTessellationsSchemaTokens->faceIndices);
 }
 
-HdMeshTessellationSchema
-HdMeshTessellationsSchema::GetTessellation(const TfToken &name)
+HdIntArrayDataSourceHandle
+HdMeshTessellationsSchema::GetFaceTessellations()
 {
-    return HdMeshTessellationSchema(
-        _GetTypedDataSource<HdContainerDataSource>(name));
+    return _GetTypedDataSource<HdIntArrayDataSource>(
+        HdMeshTessellationsSchemaTokens->faceTessellations);
+}
+
+HdIntArrayDataSourceHandle
+HdMeshTessellationsSchema::GetTessellationVertexCounts()
+{
+    return _GetTypedDataSource<HdIntArrayDataSource>(
+        HdMeshTessellationsSchemaTokens->tessellationVertexCounts);
+}
+
+HdIntArrayDataSourceHandle
+HdMeshTessellationsSchema::GetTessellationVertexIndices()
+{
+    return _GetTypedDataSource<HdIntArrayDataSource>(
+        HdMeshTessellationsSchemaTokens->tessellationVertexIndices);
 }
 
 /*static*/
 HdContainerDataSourceHandle
 HdMeshTessellationsSchema::BuildRetained(
-    const size_t count,
-    const TfToken * const names,
-    const HdDataSourceBaseHandle * const values)
+        const HdIntArrayDataSourceHandle &faceIndices,
+        const HdIntArrayDataSourceHandle &faceTessellations,
+        const HdIntArrayDataSourceHandle &tessellationVertexCounts,
+        const HdIntArrayDataSourceHandle &tessellationVertexIndices
+)
 {
-    return HdRetainedContainerDataSource::New(count, names, values);
+    TfToken _names[4];
+    HdDataSourceBaseHandle _values[4];
+
+    size_t _count = 0;
+
+    if (faceIndices) {
+        _names[_count] = HdMeshTessellationsSchemaTokens->faceIndices;
+        _values[_count++] = faceIndices;
+    }
+
+    if (faceTessellations) {
+        _names[_count] = HdMeshTessellationsSchemaTokens->faceTessellations;
+        _values[_count++] = faceTessellations;
+    }
+
+    if (tessellationVertexCounts) {
+        _names[_count] = HdMeshTessellationsSchemaTokens->tessellationVertexCounts;
+        _values[_count++] = tessellationVertexCounts;
+    }
+
+    if (tessellationVertexIndices) {
+        _names[_count] = HdMeshTessellationsSchemaTokens->tessellationVertexIndices;
+        _values[_count++] = tessellationVertexIndices;
+    }
+    return HdRetainedContainerDataSource::New(_count, _names, _values);
+}
+
+HdMeshTessellationsSchema::Builder &
+HdMeshTessellationsSchema::Builder::SetFaceIndices(
+    const HdIntArrayDataSourceHandle &faceIndices)
+{
+    _faceIndices = faceIndices;
+    return *this;
+}
+
+HdMeshTessellationsSchema::Builder &
+HdMeshTessellationsSchema::Builder::SetFaceTessellations(
+    const HdIntArrayDataSourceHandle &faceTessellations)
+{
+    _faceTessellations = faceTessellations;
+    return *this;
+}
+
+HdMeshTessellationsSchema::Builder &
+HdMeshTessellationsSchema::Builder::SetTessellationVertexCounts(
+    const HdIntArrayDataSourceHandle &tessellationVertexCounts)
+{
+    _tessellationVertexCounts = tessellationVertexCounts;
+    return *this;
+}
+
+HdMeshTessellationsSchema::Builder &
+HdMeshTessellationsSchema::Builder::SetTessellationVertexIndices(
+    const HdIntArrayDataSourceHandle &tessellationVertexIndices)
+{
+    _tessellationVertexIndices = tessellationVertexIndices;
+    return *this;
+}
+
+HdContainerDataSourceHandle
+HdMeshTessellationsSchema::Builder::Build()
+{
+    return HdMeshTessellationsSchema::BuildRetained(
+        _faceIndices,
+        _faceTessellations,
+        _tessellationVertexCounts,
+        _tessellationVertexIndices
+    );
 }
 
 /*static*/
@@ -84,7 +164,7 @@ HdMeshTessellationsSchema::GetFromParent(
     return HdMeshTessellationsSchema(
         fromParentContainer
         ? HdContainerDataSource::Cast(fromParentContainer->Get(
-                HdMeshTessellationsSchemaTokens->tessellation))
+                HdMeshTessellationsSchemaTokens->tessellations))
         : nullptr);
 }
 
@@ -92,7 +172,7 @@ HdMeshTessellationsSchema::GetFromParent(
 const TfToken &
 HdMeshTessellationsSchema::GetSchemaToken()
 {
-    return HdMeshTessellationsSchemaTokens->tessellation;
+    return HdMeshTessellationsSchemaTokens->tessellations;
 } 
 
 PXR_NAMESPACE_CLOSE_SCOPE

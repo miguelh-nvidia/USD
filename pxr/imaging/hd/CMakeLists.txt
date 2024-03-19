@@ -118,8 +118,7 @@ pxr_library(hd
         mergingSceneIndex
         mesh
         meshSchema
-        meshTessellation
-        meshTessellationSchema
+        meshTessellations
         meshTessellationsSchema
         meshTopology
         meshTopologySchema

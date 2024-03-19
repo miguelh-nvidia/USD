@@ -284,6 +284,11 @@ Triangulation::Triangulation(
 void
 Triangulation::Triangulate()
 {
+    VtIntArray &faceIndices = _tessellations.faceIndices;
+    VtIntArray &faceTessellations = _tessellations.faceTessellations;
+    VtIntArray &tessellationVertexCounts = _tessellations.tessellationVertexCounts;
+    VtIntArray &tessellationVertexIndices = _tessellations.tessellationVertexIndices;
+
     size_t indexStart = 0;
     for (size_t i = 0; i < _vertexCount.size(); ++i)
     {
@@ -294,8 +299,16 @@ Triangulation::Triangulate()
         VtIntArray counts;
         if (face.Triangulate(indices, counts))
         {
-            HdMeshTessellation tessellation = {i, counts, indices};
-            _tessellations.push_back(tessellation);
+            faceIndices.push_back(i);
+            faceTessellations.push_back(counts.size());
+            for (const auto count : counts)
+            {
+                tessellationVertexCounts.push_back(count);
+            }
+            for (const auto index : indices)
+            {
+                tessellationVertexIndices.push_back(index);
+            }
         }
         indexStart += numberOfVertices;
     }

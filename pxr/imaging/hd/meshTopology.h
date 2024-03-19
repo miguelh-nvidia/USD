@@ -27,7 +27,7 @@
 #include "pxr/pxr.h"
 #include "pxr/imaging/hd/api.h"
 #include "pxr/imaging/hd/geomSubset.h"
-#include "pxr/imaging/hd/meshTessellation.h"
+#include "pxr/imaging/hd/meshTessellations.h"
 #include "pxr/imaging/hd/version.h"
 #include "pxr/imaging/hd/topology.h"
 

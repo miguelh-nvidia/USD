@@ -131,8 +131,16 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
     // reset holeIndex
     holeIndex = 0;
 
-    const auto & tessellationEnd = _topology->GetTessellations().end();
-    auto & tessellationIt = _topology->GetTessellations().begin();
+    VtIntArray trianglesPerFaces;
+    VtVec3iArray triangleIndices;
+    VtIntArray triangleFlags;
+    _topology->GetTessellations().ComputeTriangleIndices(
+        trianglesPerFaces, triangleIndices, triangleFlags);
+    const auto & tessellationFace = _topology->GetTessellations().faceIndices;
+    int tessellationIndex = 0;
+    int tessellationSize = tessellationFace.size();
+    int tessellationOffset = 0;
+
     // i  -> authored face index [0, numFaces)
     // tv -> triangulated face index [0, numTris)
     // v  -> index to the first vertex (index) for face i
@@ -144,22 +152,20 @@ HdMeshUtil::ComputeTriangleIndices(VtVec3iArray *indices,
         } else if (holeIndex < numHoleFaces && holeFacesPtr[holeIndex] == i) {
             // Skip hole faces.
             ++holeIndex;
-        } else if (tessellationIt != tessellationEnd && tessellationIt->faceIndex == i) {
+        } else if (tessellationIndex < tessellationSize && tessellationFace[tessellationIndex] == i) {
             // Custom tessellation.
-            VtVec3iArray triangles;
-            VtIntArray flags;
-            tessellationIt->ComputeTriangles(triangles, flags);
             int edgeIndex = ev;
-            for (int j = 0; j < triangles.size(); ++j)
+            for (int j = 0; j < trianglesPerFaces[tessellationIndex]; ++j)
             {
-                (*indices)[tv] = triangles[j];
-                (*primitiveParams)[tv] = EncodeCoarseFaceParam(i, flags[j]);
+                (*indices)[tv] = triangleIndices[tessellationOffset + j];
+                (*primitiveParams)[tv] = EncodeCoarseFaceParam(i, triangleFlags[tessellationOffset + j]);
                 if (edgeIndices) {
                     (*edgeIndices)[tv] = ++edgeIndex;
                 }
                 ++tv;
             }
-            tessellationIt++;
+            tessellationOffset += trianglesPerFaces[tessellationIndex];
+            ++tessellationIndex;
         } else {
             // edgeFlag is used for inner-line removal of non-triangle
             // faces on wireframe shading.

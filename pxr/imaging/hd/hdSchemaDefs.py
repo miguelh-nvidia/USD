@@ -123,23 +123,16 @@
     ),
 
     #--------------------------------------------------------------------------
-    # meshTessellation
-    dict(
-        SCHEMA_NAME = 'MeshTessellation',
-        MEMBERS = [
-            ('faceIndex', T_SIZET, {}),
-            ('counts', T_INTARRAY, {}),
-            ('indices', T_INTARRAY, {}),
-        ],
-    ),
-
-    #--------------------------------------------------------------------------
     # meshTessellations
     dict(
         SCHEMA_NAME = 'MeshTessellations',
-        SCHEMA_TOKEN = 'tessellation',
-        SCHEMA_INCLUDES = ['{{LIBRARY_PATH}}/meshTessellationSchema'],
-        GENERIC_MEMBER = ('tessellation', 'HdMeshTessellationSchema', {}),
+        SCHEMA_TOKEN = 'tessellations',
+        MEMBERS = [
+            ('faceIndices', T_INTARRAY, {}),
+            ('faceTessellations', T_INTARRAY, {}),
+            ('tessellationVertexCounts', T_INTARRAY, {}),
+            ('tessellationVertexIndices', T_INTARRAY, {}),
+        ],
     ),
 
     #--------------------------------------------------------------------------

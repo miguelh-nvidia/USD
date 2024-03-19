@@ -87,19 +87,7 @@ void TriangulationSceneIndex::_PrimsAdded(
             faceVertexCounts->GetTypedValue(0.0f)
         );
         triangulation.Triangulate();
-        std::vector<TfToken> tokens;
-        std::vector<HdDataSourceBaseHandle> tessellations;
-        for (const auto it : triangulation.GetTessellations())
-        {
-            HdMeshTessellationSchema tessellation = 
-                pxr::HdMeshTessellationSchema::Builder()
-                .SetFaceIndex(HdRetainedTypedSampledDataSource<size_t>::New(it.faceIndex))
-                .SetCounts(HdRetainedTypedSampledDataSource<VtIntArray>::New(it.counts))
-                .SetIndices(HdRetainedTypedSampledDataSource<VtIntArray>::New(it.indices))
-                .Build();
-            tokens.push_back(TfToken("Tessellation" + std::to_string(it.faceIndex)));
-            tessellations.push_back(tessellation.GetContainer());
-        }
+        const HdMeshTessellations& ret = triangulation.GetTessellations();
 
         HdMeshSchema meshSchemaCopy =
             pxr::HdMeshSchema::Builder()
@@ -109,11 +97,12 @@ void TriangulationSceneIndex::_PrimsAdded(
             .SetGeomSubsets(meshSchema.GetGeomSubsets().GetContainer())
             .SetDoubleSided(meshSchema.GetDoubleSided())
             .SetTessellations(
-                pxr::HdMeshTessellationsSchema::BuildRetained(
-                    tessellations.size(),
-                    tokens.data(),
-                    tessellations.data()
-                )
+                pxr::HdMeshTessellationsSchema::Builder()
+                    .SetFaceIndices(HdRetainedTypedSampledDataSource<VtIntArray>::New(ret.faceIndices))
+                    .SetFaceTessellations(HdRetainedTypedSampledDataSource<VtIntArray>::New(ret.faceTessellations))
+                    .SetTessellationVertexCounts(HdRetainedTypedSampledDataSource<VtIntArray>::New(ret.tessellationVertexCounts))
+                    .SetTessellationVertexIndices(HdRetainedTypedSampledDataSource<VtIntArray>::New(ret.tessellationVertexIndices))
+                    .Build()
             )
             .Build();
 

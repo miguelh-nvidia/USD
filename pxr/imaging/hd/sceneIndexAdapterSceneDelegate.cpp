@@ -79,7 +79,8 @@
 #include "pxr/imaging/hd/materialNodeParameterSchema.h"
 #include "pxr/imaging/hd/materialSchema.h"
 #include "pxr/imaging/hd/meshSchema.h"
-#include "pxr/imaging/hd/meshTessellationSchema.h"
+#include "pxr/imaging/hd/meshTessellations.h"
+#include "pxr/imaging/hd/meshTessellationsSchema.h"
 #include "pxr/imaging/hd/meshTopologySchema.h"
 #include "pxr/imaging/hd/primvarSchema.h"
 #include "pxr/imaging/hd/primvarsSchema.h"
@@ -461,19 +462,12 @@ HdSceneIndexAdapterSceneDelegate::GetMeshTopology(SdfPath const &id)
 
     HdMeshTessellationsSchema meshTessellations = meshSchema.GetTessellations();
     if (meshTessellations.IsDefined()) {
-        HdMeshTessellations tessellations;
-        for (const TfToken &name : meshTessellations.GetTessellationNames()) {
-            HdMeshTessellationSchema meshTessellation = meshTessellations.GetTessellation(name);
-            if (!meshTessellation.IsDefined()) {
-                continue;
-            }
-            HdMeshTessellation tessellation = {
-                meshTessellation.GetFaceIndex()->GetTypedValue(0.0f),
-                meshTessellation.GetCounts()->GetTypedValue(0.0f),
-                meshTessellation.GetIndices()->GetTypedValue(0.0f)
-            };
-            tessellations.push_back(tessellation);
-        }
+        HdMeshTessellations tessellations = {
+            meshTessellations.GetFaceIndices()->GetTypedValue(0.0f),
+            meshTessellations.GetFaceTessellations()->GetTypedValue(0.0f),
+            meshTessellations.GetTessellationVertexCounts()->GetTypedValue(0.0f),
+            meshTessellations.GetTessellationVertexIndices()->GetTypedValue(0.0f)
+        };
         meshTopology.SetTessellations(tessellations);
     }
 

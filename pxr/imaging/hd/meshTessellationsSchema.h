@@ -38,7 +38,6 @@
 /// \file
 
 #include "pxr/imaging/hd/api.h"
-#include "pxr/imaging/hd/meshTessellationSchema.h"
 
 #include "pxr/imaging/hd/schema.h"
 
@@ -51,7 +50,11 @@ PXR_NAMESPACE_OPEN_SCOPE
 // --(END CUSTOM CODE: Declares)--
 
 #define HD_MESH_TESSELLATIONS_SCHEMA_TOKENS \
-    (tessellation) \
+    (tessellations) \
+    (faceIndices) \
+    (faceTessellations) \
+    (tessellationVertexCounts) \
+    (tessellationVertexIndices) \
 
 TF_DECLARE_PUBLIC_TOKENS(HdMeshTessellationsSchemaTokens, HD_API,
     HD_MESH_TESSELLATIONS_SCHEMA_TOKENS);
@@ -69,7 +72,7 @@ public:
       : HdSchema(container) {}
 
     /// Retrieves a container data source with the schema's default name token
-    /// "tessellation" from the parent container and constructs a
+    /// "tessellations" from the parent container and constructs a
     /// HdMeshTessellationsSchema instance.
     /// Because the requested container data source may not exist, the result
     /// should be checked with IsDefined() or a bool comparison before use.
@@ -86,9 +89,16 @@ public:
     /// @{
 
     HD_API
-    TfTokenVector GetTessellationNames();
+    HdIntArrayDataSourceHandle GetFaceIndices();
+
     HD_API
-    HdMeshTessellationSchema GetTessellation(const TfToken &name); 
+    HdIntArrayDataSourceHandle GetFaceTessellations();
+
+    HD_API
+    HdIntArrayDataSourceHandle GetTessellationVertexCounts();
+
+    HD_API
+    HdIntArrayDataSourceHandle GetTessellationVertexIndices(); 
 
     /// @}
 
@@ -104,12 +114,56 @@ public:
 
     /// \name Schema construction
     /// @{
+
+    /// \deprecated Use Builder instead.
+    ///
+    /// Builds a container data source which includes the provided child data
+    /// sources. Parameters with nullptr values are excluded. This is a
+    /// low-level interface. For cases in which it's desired to define
+    /// the container with a sparse set of child fields, the Builder class
+    /// is often more convenient and readable.
     HD_API
     static HdContainerDataSourceHandle
     BuildRetained(
-        size_t count,
-        const TfToken *names,
-        const HdDataSourceBaseHandle *values);
+        const HdIntArrayDataSourceHandle &faceIndices,
+        const HdIntArrayDataSourceHandle &faceTessellations,
+        const HdIntArrayDataSourceHandle &tessellationVertexCounts,
+        const HdIntArrayDataSourceHandle &tessellationVertexIndices
+    );
+
+    /// \class HdMeshTessellationsSchema::Builder
+    /// 
+    /// Utility class for setting sparse sets of child data source fields to be
+    /// filled as arguments into BuildRetained. Because all setter methods
+    /// return a reference to the instance, this can be used in the "builder
+    /// pattern" form.
+    class Builder
+    {
+    public:
+        HD_API
+        Builder &SetFaceIndices(
+            const HdIntArrayDataSourceHandle &faceIndices);
+        HD_API
+        Builder &SetFaceTessellations(
+            const HdIntArrayDataSourceHandle &faceTessellations);
+        HD_API
+        Builder &SetTessellationVertexCounts(
+            const HdIntArrayDataSourceHandle &tessellationVertexCounts);
+        HD_API
+        Builder &SetTessellationVertexIndices(
+            const HdIntArrayDataSourceHandle &tessellationVertexIndices);
+
+        /// Returns a container data source containing the members set thus far.
+        HD_API
+        HdContainerDataSourceHandle Build();
+
+    private:
+        HdIntArrayDataSourceHandle _faceIndices;
+        HdIntArrayDataSourceHandle _faceTessellations;
+        HdIntArrayDataSourceHandle _tessellationVertexCounts;
+        HdIntArrayDataSourceHandle _tessellationVertexIndices;
+
+    };
 
     /// @}
 };
