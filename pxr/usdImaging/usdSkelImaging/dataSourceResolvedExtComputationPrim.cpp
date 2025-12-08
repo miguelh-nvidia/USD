@@ -21,7 +21,10 @@
 #include "pxr/imaging/hd/extComputationSchema.h"
 #include "pxr/imaging/hd/meshSchema.h"
 #include "pxr/imaging/hd/meshTopologySchema.h"
+#include "pxr/imaging/hd/meshUtil.h"
 #include "pxr/imaging/hd/retainedDataSource.h"
+#include "pxr/imaging/hd/tokens.h"
+#include "pxr/imaging/pxOsd/tokens.h"
 
 #include "pxr/base/gf/dualQuatf.h"
 #include "pxr/base/gf/matrix3f.h"
@@ -33,6 +36,136 @@
 PXR_NAMESPACE_OPEN_SCOPE
 
 namespace {
+
+// Triangulate face-varying data using HdMeshTopologySchema.
+template<typename ArrayType, HdType hdType>
+ArrayType
+_TriangulateFaceVarying(
+    const HdMeshTopologySchema &topoSchema,
+    const ArrayType &source,
+    HdSampledDataSource::Time time)
+{
+    HdIntArrayDataSourceHandle countsDs = topoSchema.GetFaceVertexCounts();
+    HdIntArrayDataSourceHandle indicesDs = topoSchema.GetFaceVertexIndices();
+    if (!countsDs || !indicesDs) {
+        return source;
+    }
+    HdIntArrayDataSourceHandle holesDs = topoSchema.GetHoleIndices();
+    HdTokenDataSourceHandle orientDs = topoSchema.GetOrientation();
+
+    VtIntArray counts = countsDs->GetTypedValue(time);
+    VtIntArray indices = indicesDs->GetTypedValue(time);
+    VtIntArray holes = holesDs ? holesDs->GetTypedValue(time) : VtIntArray();
+    TfToken orient = orientDs ? orientDs->GetTypedValue(time) : HdTokens->rightHanded;
+
+    HdMeshTopology topology(
+        PxOsdOpenSubdivTokens->none,
+        orient,
+        counts,
+        indices,
+        holes);
+
+    HdMeshUtil meshUtil(&topology, SdfPath::EmptyPath());
+
+    VtValue triangulated;
+    HdMeshComputationResult result = meshUtil.ComputeTriangulatedFaceVaryingPrimvar(
+        source.cdata(),
+        static_cast<int>(source.size()),
+        hdType,
+        &triangulated);
+
+    if (result == HdMeshComputationResult::Success) {
+        return triangulated.UncheckedGet<ArrayType>();
+    } else if (result == HdMeshComputationResult::Unchanged) {
+        return source;
+    }
+    TF_CODING_ERROR("Could not triangulate face-varying data");
+    return source;
+}
+
+// Data source that triangulates Vec3f face-varying data on access.
+class _TriangulatedVec3fDataSource : public HdVec3fArrayDataSource
+{
+public:
+    HD_DECLARE_DATASOURCE(_TriangulatedVec3fDataSource);
+
+    VtValue GetValue(const HdSampledDataSource::Time shutterOffset) override {
+        return VtValue(GetTypedValue(shutterOffset));
+    }
+
+    VtVec3fArray
+    GetTypedValue(const HdSampledDataSource::Time shutterOffset) override {
+        TRACE_FUNCTION();
+        if (!_source || !_topoSchema.IsDefined()) {
+            return VtVec3fArray();
+        }
+        return _TriangulateFaceVarying<VtVec3fArray, HdTypeFloatVec3>(
+            _topoSchema, _source->GetTypedValue(shutterOffset), shutterOffset);
+    }
+
+    bool GetContributingSampleTimesForInterval(
+        const HdSampledDataSource::Time startTime,
+        const HdSampledDataSource::Time endTime,
+        std::vector<float> * const outSampleTimes) override
+    {
+        return _source && _source->GetContributingSampleTimesForInterval(
+            startTime, endTime, outSampleTimes);
+    }
+
+private:
+    _TriangulatedVec3fDataSource(
+        HdVec3fArrayDataSourceHandle source,
+        HdMeshTopologySchema topoSchema)
+     : _source(std::move(source))
+     , _topoSchema(std::move(topoSchema))
+    {
+    }
+
+    HdVec3fArrayDataSourceHandle const _source;
+    HdMeshTopologySchema const _topoSchema;
+};
+
+// Data source that triangulates Int face-varying data on access.
+class _TriangulatedIntDataSource : public HdIntArrayDataSource
+{
+public:
+    HD_DECLARE_DATASOURCE(_TriangulatedIntDataSource);
+
+    VtValue GetValue(const HdSampledDataSource::Time shutterOffset) override {
+        return VtValue(GetTypedValue(shutterOffset));
+    }
+
+    VtIntArray
+    GetTypedValue(const HdSampledDataSource::Time shutterOffset) override {
+        TRACE_FUNCTION();
+        if (!_source || !_topoSchema.IsDefined()) {
+            return VtIntArray();
+        }
+        return _TriangulateFaceVarying<VtIntArray, HdTypeInt32>(
+            _topoSchema, _source->GetTypedValue(shutterOffset), shutterOffset);
+    }
+
+    bool GetContributingSampleTimesForInterval(
+        const HdSampledDataSource::Time startTime,
+        const HdSampledDataSource::Time endTime,
+        std::vector<float> * const outSampleTimes) override
+    {
+        return _source && _source->GetContributingSampleTimesForInterval(
+            startTime, endTime, outSampleTimes);
+    }
+
+private:
+    _TriangulatedIntDataSource(
+        HdIntArrayDataSourceHandle source,
+        HdMeshTopologySchema topoSchema)
+     : _source(std::move(source))
+     , _topoSchema(std::move(topoSchema))
+    {
+    }
+
+    HdIntArrayDataSourceHandle const _source;
+    HdMeshTopologySchema const _topoSchema;
+};
 
 template<typename T>
 HdDataSourceBaseHandle
@@ -67,13 +200,22 @@ public:
 
         if (name == UsdSkelImagingExtAggregatorComputationInputNameTokens
                                 ->restNormals) {
-            return _GetPrimvarValueDataSource(HdPrimvarsSchemaTokens->normals);
+            if (_GetHasFaceVaryingNormals()) {
+                return _GetTriangulatedNormalsDataSource();
+            } else {
+                return _GetPrimvarValueDataSource(HdPrimvarsSchemaTokens->normals);
+            }
         }
 
         if (name == UsdSkelImagingExtAggregatorComputationInputNameTokens
                                 ->faceVertexIndices) {
-            return _GetMeshTopologyDataSource(
-                HdMeshTopologySchemaTokens->faceVertexIndices);
+            if (_GetHasFaceVaryingNormals()) {
+                return _GetTriangulatedIndicesDataSource();
+            }
+            else {
+                return _GetMeshTopologyDataSource(
+                    HdMeshTopologySchemaTokens->faceVertexIndices);
+            }
         }
 
         if (name == UsdSkelImagingExtAggregatorComputationInputNameTokens
@@ -178,24 +320,52 @@ private:
         return interpolation == HdPrimvarSchemaTokens->faceVarying;
     }
 
-
-    HdSampledDataSourceHandle _GetMeshTopologyDataSource(const TfToken &name) {
+    HdMeshTopologySchema _GetMeshTopologySchema() {
         TRACE_FUNCTION();
 
         HdContainerDataSourceHandle meshDs =
             HdContainerDataSource::Cast(
                 _resolvedPrimSource->Get(HdMeshSchemaTokens->mesh));
         if (!meshDs) {
-            return nullptr;
+            return HdMeshTopologySchema(nullptr);
         }
+        return HdMeshSchema(meshDs).GetTopology();
+    }
 
-        HdMeshSchema meshSchema = HdMeshSchema(meshDs);
-        HdMeshTopologySchema topoSchema = meshSchema.GetTopology();
+    HdSampledDataSourceHandle _GetMeshTopologyDataSource(const TfToken &name) {
+        HdMeshTopologySchema topoSchema = _GetMeshTopologySchema();
         if (!topoSchema.IsDefined()) {
             return nullptr;
         }
 
         return HdSampledDataSource::Cast(topoSchema.GetContainer()->Get(name));
+    }
+
+    HdSampledDataSourceHandle _GetTriangulatedNormalsDataSource() {
+        TRACE_FUNCTION();
+
+        HdVec3fArrayDataSourceHandle normalsDs =
+            HdVec3fArrayDataSource::Cast(
+                _GetPrimvarValueDataSource(HdPrimvarsSchemaTokens->normals));
+        HdMeshTopologySchema topoSchema = _GetMeshTopologySchema();
+        if (normalsDs && topoSchema.IsDefined()) {
+            return _TriangulatedVec3fDataSource::New(normalsDs, std::move(topoSchema));
+        }
+        return normalsDs;
+    }
+
+    HdSampledDataSourceHandle _GetTriangulatedIndicesDataSource() {
+        TRACE_FUNCTION();
+
+        HdIntArrayDataSourceHandle faceVertexIndicesDs =
+            HdIntArrayDataSource::Cast(
+                _GetMeshTopologyDataSource(HdMeshTopologySchemaTokens->faceVertexIndices));
+        HdMeshTopologySchema topoSchema = _GetMeshTopologySchema();
+        if (faceVertexIndicesDs && topoSchema.IsDefined()) {
+            return _TriangulatedIntDataSource::New(
+                faceVertexIndicesDs, std::move(topoSchema));
+        }
+        return faceVertexIndicesDs;
     }
 
     UsdSkelImagingDataSourceResolvedPointsBasedPrimHandle const _resolvedPrimSource;
@@ -691,6 +861,58 @@ private:
     const TfToken _primvarName;
 };
 
+// Data source for element count that accounts for triangulation of
+// face-varying normals.
+class _TriangulatedNumElementsDataSource : public HdSizetDataSource
+{
+public:
+    HD_DECLARE_DATASOURCE(_TriangulatedNumElementsDataSource);
+
+    VtValue GetValue(const HdSampledDataSource::Time shutterOffset) override {
+        return VtValue(GetTypedValue(shutterOffset));
+    }
+
+    size_t GetTypedValue(const HdSampledDataSource::Time shutterOffset) override {
+        TRACE_FUNCTION();
+
+        if (!_faceVertexCounts) {
+            return 0;
+        }
+        
+        VtIntArray counts = _faceVertexCounts->GetTypedValue(shutterOffset);
+        size_t numTris = 0;
+        for (int nv : counts) {
+            if (nv >= 3) {
+                numTris += nv - 2;
+            }
+        }
+        return numTris * 3;
+    }
+
+    bool GetContributingSampleTimesForInterval(
+        const HdSampledDataSource::Time startTime,
+        const HdSampledDataSource::Time endTime,
+        std::vector<float> * const outSampleTimes) override
+    {
+        TRACE_FUNCTION();
+
+        if (!_faceVertexCounts) {
+            return false;
+        }
+        return _faceVertexCounts->GetContributingSampleTimesForInterval(
+            startTime, endTime, outSampleTimes);
+    }
+
+private:
+    _TriangulatedNumElementsDataSource(
+        HdIntArrayDataSourceHandle faceVertexCounts)
+     : _faceVertexCounts(std::move(faceVertexCounts))
+    {
+    }
+
+    HdIntArrayDataSourceHandle const _faceVertexCounts;
+};
+
 // Prim data source skinningInputAggregatorComputation prim.
 HdContainerDataSourceHandle
 _ExtAggregatorComputationPrimDataSource(
@@ -767,6 +989,43 @@ _ExtComputationOutputs()
             std::size(names), names, values);
 }
 
+// Helper to check if normals primvar has face-varying interpolation.
+bool
+_HasFaceVaryingNormals(
+    UsdSkelImagingDataSourceResolvedPointsBasedPrimHandle const &resolvedPrimSource)
+{
+    HdPrimvarSchema normalsPrimvar =
+        resolvedPrimSource->GetPrimvars().GetPrimvar(
+            HdPrimvarsSchemaTokens->normals);
+    HdTokenDataSourceHandle interpDs = normalsPrimvar.GetInterpolation();
+    if (!interpDs) {
+        return false;
+    }
+    const TfToken interpolation = interpDs->GetTypedValue(0.0f);
+    return interpolation == HdPrimvarSchemaTokens->faceVarying;
+}
+
+// Helper to get faceVertexCounts from mesh topology.
+HdIntArrayDataSourceHandle
+_GetFaceVertexCountsDataSource(
+    UsdSkelImagingDataSourceResolvedPointsBasedPrimHandle const &resolvedPrimSource)
+{
+    HdContainerDataSourceHandle meshDs =
+        HdContainerDataSource::Cast(
+            resolvedPrimSource->Get(HdMeshSchemaTokens->mesh));
+    if (!meshDs) {
+        return nullptr;
+    }
+
+    HdMeshSchema meshSchema = HdMeshSchema(meshDs);
+    HdMeshTopologySchema topoSchema = meshSchema.GetTopology();
+    if (!topoSchema.IsDefined()) {
+        return nullptr;
+    }
+
+    return topoSchema.GetFaceVertexCounts();
+}
+
 // Prim data source skinningComputation prim.
 HdContainerDataSourceHandle
 _ExtComputationPrimDataSource(
@@ -784,8 +1043,24 @@ _ExtComputationPrimDataSource(
             ? HdPrimvarsSchemaTokens->normals
             : HdPrimvarsSchemaTokens->points;
 
-    HdSizetDataSourceHandle const elementCount =
-        _NumElementsDataSource::New(resolvedPrimSource->GetPrimvars(), primvarName);
+    HdSizetDataSourceHandle elementCount;
+    
+    // For face-varying normals, we need the triangulated count since the
+    // input data will be triangulated before skinning.
+    if (computationType == UsdSkelImagingExtComputationTypeTokens->normals &&
+        _HasFaceVaryingNormals(resolvedPrimSource)) {
+        HdIntArrayDataSourceHandle faceVertexCountsDs =
+            _GetFaceVertexCountsDataSource(resolvedPrimSource);
+        if (faceVertexCountsDs) {
+            elementCount = _TriangulatedNumElementsDataSource::New(
+                faceVertexCountsDs);
+        }
+    }
+    
+    if (!elementCount) {
+        elementCount = _NumElementsDataSource::New(
+            resolvedPrimSource->GetPrimvars(), primvarName);
+    }
 
     return
         HdRetainedContainerDataSource::New(
