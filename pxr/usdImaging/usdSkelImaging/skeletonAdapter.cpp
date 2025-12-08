@@ -1537,6 +1537,9 @@ UsdSkelImagingSkeletonAdapter::_ExtractSkinningDualQuats(
         }
     }, /*grainSize*/ 1000);
 
+    return true;
+}
+
 VtValue 
 UsdSkelImagingSkeletonAdapter::_GetExtComputationInputForSkinningComputation(
     UsdPrim const& prim,
@@ -2026,13 +2029,15 @@ UsdSkelImagingSkeletonAdapter::_SampleExtComputationInputForSkinningComputation(
                                          ->skinningScaleXforms) {
                         VtMatrix3fArray skinningScaleXforms;
                         _ExtractSkinningScaleXforms(skinningXforms,
-                                                    &skinningScaleXforms);
+                                                    &skinningScaleXforms,
+                                                    ComputationType::Points);
                         sampleValues[i] = VtValue::Take(skinningScaleXforms);
                     }
                     else {
                         VtVec4fArray skinningDualQuats;
                         _ExtractSkinningDualQuats(skinningXforms,
-                                                  &skinningDualQuats);
+                                                  &skinningDualQuats,
+                                                  ComputationType::Points);
                         sampleValues[i] = VtValue::Take(skinningDualQuats);
                     }
                 }
@@ -2456,12 +2461,15 @@ UsdSkelImagingSkeletonAdapter::_RemoveSkinnedPrimAndComputations(
     index->RemoveRprim(cachePath);
 
     // Remove the computations it participates in.
-    SdfPath compPath = _GetSkinningComputationPath(cachePath);
-    index->RemoveSprim(HdPrimTypeTokens->extComputation, compPath);
-    
-    SdfPath aggrCompPath =
-        _GetSkinningInputAggregatorComputationPath(cachePath);
-    index->RemoveSprim(HdPrimTypeTokens->extComputation, aggrCompPath);
+    for (const ComputationType computationType : 
+            {ComputationType::Points, ComputationType::Normals}) {
+        SdfPath compPath = _GetSkinningComputationPath(cachePath, computationType);
+        index->RemoveSprim(HdPrimTypeTokens->extComputation, compPath);
+
+        SdfPath aggrCompPath =
+            _GetSkinningInputAggregatorComputationPath(cachePath, computationType);
+        index->RemoveSprim(HdPrimTypeTokens->extComputation, aggrCompPath);
+    }
 
     // Clear cache entry.
     _skinnedPrimDataCache.erase(cachePath);
