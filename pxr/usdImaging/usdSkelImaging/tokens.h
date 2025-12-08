@@ -13,6 +13,14 @@
 
 PXR_NAMESPACE_OPEN_SCOPE
 
+#define USD_SKEL_IMAGING_EXT_COMPUTATION_TYPE_TOKENS \
+    (points) \
+    (normals)
+
+TF_DECLARE_PUBLIC_TOKENS(
+    UsdSkelImagingExtComputationTypeTokens, USDSKELIMAGING_API,
+    USD_SKEL_IMAGING_EXT_COMPUTATION_TYPE_TOKENS);
+
 #define USD_SKEL_IMAGING_PRIM_TYPE_TOKENS \
     (skeleton)                            \
     (skelAnimation)                       \
