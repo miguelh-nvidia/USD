@@ -63,6 +63,23 @@ pxr_build_test(testUsdSkelImagingChanges
         testenv/testUsdSkelImagingChanges.cpp
 )
 
+# Build tests for skeleton adapter
+pxr_build_test(testUsdSkelImagingSkeletonAdapter
+    LIBRARIES
+        usdImaging
+        usdShade
+        usdGeom
+        usdSkel
+        usd
+        sdf
+        hd
+        tf
+        gf
+        arch
+    CPPFILES
+        testenv/testUsdSkelImagingSkeletonAdapter.cpp
+)
+
 # Register tests only when they are supported.
 if (BUILD_SHARED_LIBS)
     pxr_register_test(testUsdSkelImagingChanges
@@ -71,5 +88,11 @@ if (BUILD_SHARED_LIBS)
         TESTENV testenv/testUsdSkelImagingChanges
         ENV
         TF_FATAL_VERIFY=0
+    )
+
+    pxr_register_test(testUsdSkelImagingSkeletonAdapter
+        COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testUsdSkelImagingSkeletonAdapter"
+        EXPECTED_RETURN_CODE 0
+        TESTENV testenv/testUsdSkelImagingSkeletonAdapter
     )
 endif()

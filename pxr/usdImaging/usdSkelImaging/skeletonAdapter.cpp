@@ -841,9 +841,9 @@ UsdSkelImagingSkeletonAdapter::InvokeComputation(
 {
     HD_TRACE_FUNCTION();
 
-    // Only invoke the computation if it's a points computation.
-    // Normals computations are not supported yet for CPU .
-    if(!_IsSkinningPointsComputationPath(cachePath)) {
+    // Only invoke the computation if it's a points or normals computation.
+    if(!_IsSkinningPointsComputationPath(cachePath) &&
+       !_IsSkinningNormalsComputationPath(cachePath)) {
         return;
     }
 
