@@ -34,7 +34,10 @@
 #include "pxr/imaging/hd/extComputation.h" // dirtyBits
 #include "pxr/imaging/hd/extComputationContext.h"
 #include "pxr/imaging/hd/mesh.h"
+#include "pxr/imaging/hd/meshUtil.h"
 #include "pxr/imaging/hd/perfLog.h"
+
+#include "pxr/imaging/pxOsd/tokens.h"
 
 #include "pxr/base/work/loops.h"
 #include "pxr/base/gf/quaternion.h"
@@ -1445,6 +1448,43 @@ _ComputeSubShapeWeights(const UsdSkelSkeletonQuery& skelQuery,
     return false;
 }
 
+template <typename ArrayType, HdType hdType>
+ArrayType
+_TriangulateFaceVarying(
+    const VtIntArray& faceVertexCounts,
+    const VtIntArray& faceVertexIndices,
+    const VtIntArray& holeIndices,
+    const TfToken& orientation,
+    const ArrayType& source)
+{
+    // Construct HdMeshTopology for triangulation
+    HdMeshTopology topology(
+        PxOsdOpenSubdivTokens->none,  // No subdivision
+        orientation,
+        faceVertexCounts,
+        faceVertexIndices,
+        holeIndices);
+
+    HdMeshUtil meshUtil(&topology, SdfPath());
+    
+    VtValue result;
+    HdMeshComputationResult computeResult =
+        meshUtil.ComputeTriangulatedFaceVaryingPrimvar(
+            source.data(),
+            static_cast<int>(source.size()),
+            hdType,
+            &result);
+    
+    if (computeResult == HdMeshComputationResult::Success) {
+        return result.UncheckedGet<ArrayType>();
+    } else if (computeResult == HdMeshComputationResult::Unchanged) {
+        return source;
+    }
+    
+    TF_CODING_ERROR("Failed to triangulate face-varying data");
+    return source;
+}
+
 } // namespace
 
 // Extract the Scale & Shear parts of 4x4 matrices by removing the
@@ -1581,6 +1621,17 @@ UsdSkelImagingSkeletonAdapter::_GetExtComputationInputForSkinningComputation(
         } else {
             VtVec3fArray restNormals = _GetSkinnedPrimNormals(prim,
                                             skinnedPrimCachePath, time);
+            
+            // Get skinned prim data to check interpolation
+            const _SkinnedPrimData* skinnedPrimData =
+                    _GetSkinnedPrimData(skinnedPrimCachePath);
+            if (skinnedPrimData && 
+                skinnedPrimData->normalsInterpolation == UsdGeomTokens->faceVarying) {
+                // Triangulate to get the correct count
+                restNormals = _TriangulateFaceVaryingNormals(
+                    prim, skinnedPrimCachePath, time, restNormals);
+            }
+            
             size_t numNormals = restNormals.size();
             return VtValue(numNormals);
         }
@@ -1747,6 +1798,12 @@ UsdSkelImagingSkeletonAdapter::_GetExtComputationInputForInputAggregator(
                     ->restNormals) {
         VtVec3fArray restNormals =
             _GetSkinnedPrimNormals(prim, skinnedPrimCachePath, time);
+        
+        // Triangulate face-varying normals
+        if (skinnedPrimData->normalsInterpolation == UsdGeomTokens->faceVarying) {
+            restNormals = _TriangulateFaceVaryingNormals(
+                prim, skinnedPrimCachePath, time, restNormals);
+        }
         return VtValue(restNormals);
     }
 
@@ -1755,6 +1812,12 @@ UsdSkelImagingSkeletonAdapter::_GetExtComputationInputForInputAggregator(
                     ->faceVertexIndices) {
         VtIntArray faceVertexIndices =
             _GetSkinnedPrimFaceVertexIndices(prim, skinnedPrimCachePath, time);
+        
+        // Triangulate face-varying indices
+        if (skinnedPrimData->normalsInterpolation == UsdGeomTokens->faceVarying) {
+            faceVertexIndices = _TriangulateFaceVaryingIndices(
+                prim, skinnedPrimCachePath, time, faceVertexIndices);
+        }
         return VtValue(faceVertexIndices);
     }
 
@@ -1934,6 +1997,17 @@ UsdSkelImagingSkeletonAdapter::_SampleExtComputationInputForSkinningComputation(
         } else {
             VtVec3fArray restNormals = _GetSkinnedPrimNormals(prim,
                                             skinnedPrimCachePath, time);
+            
+            // Get skinned prim data to check interpolation
+            const _SkinnedPrimData* skinnedPrimData =
+                    _GetSkinnedPrimData(skinnedPrimCachePath);
+            if (skinnedPrimData && 
+                skinnedPrimData->normalsInterpolation == UsdGeomTokens->faceVarying) {
+                // Triangulate to get the correct count
+                restNormals = _TriangulateFaceVaryingNormals(
+                    prim, skinnedPrimCachePath, time, restNormals);
+            }
+            
             size_t numNormals = restNormals.size();
             sampleValues[0] = VtValue(numNormals);
         }
@@ -2629,6 +2703,90 @@ UsdSkelImagingSkeletonAdapter::_GetSkinnedPrimFaceVertexIndices(
         return faceVertexIndices;
     }
     return VtIntArray();
+}
+
+
+VtIntArray
+UsdSkelImagingSkeletonAdapter::_GetSkinnedPrimFaceVertexCounts(
+    const UsdPrim& skinnedPrim,
+    const SdfPath& skinnedPrimCachePath,
+    UsdTimeCode time) const
+{
+    UsdGeomMesh mesh(skinnedPrim);
+    if (mesh) {
+        VtIntArray faceVertexCounts;
+        mesh.GetFaceVertexCountsAttr().Get(&faceVertexCounts, time);
+        return faceVertexCounts;
+    }
+    return VtIntArray();
+}
+
+
+TfToken
+UsdSkelImagingSkeletonAdapter::_GetSkinnedPrimOrientation(
+    const UsdPrim& skinnedPrim,
+    const SdfPath& skinnedPrimCachePath) const
+{
+    UsdGeomMesh mesh(skinnedPrim);
+    if (mesh) {
+        TfToken orientation;
+        mesh.GetOrientationAttr().Get(&orientation);
+        return orientation;
+    }
+    return UsdGeomTokens->rightHanded;
+}
+
+
+VtIntArray
+UsdSkelImagingSkeletonAdapter::_GetSkinnedPrimHoleIndices(
+    const UsdPrim& skinnedPrim,
+    const SdfPath& skinnedPrimCachePath) const
+{
+    UsdGeomMesh mesh(skinnedPrim);
+    if (mesh) {
+        VtIntArray holeIndices;
+        mesh.GetHoleIndicesAttr().Get(&holeIndices);
+        return holeIndices;
+    }
+    return VtIntArray();
+}
+
+
+VtVec3fArray
+UsdSkelImagingSkeletonAdapter::_TriangulateFaceVaryingNormals(
+    const UsdPrim& skinnedPrim,
+    const SdfPath& skinnedPrimCachePath,
+    UsdTimeCode time,
+    const VtVec3fArray& normals) const
+{
+    VtIntArray faceVertexCounts = 
+        _GetSkinnedPrimFaceVertexCounts(skinnedPrim, skinnedPrimCachePath, time);
+    VtIntArray faceVertexIndices = 
+        _GetSkinnedPrimFaceVertexIndices(skinnedPrim, skinnedPrimCachePath, time);
+    VtIntArray holeIndices = 
+        _GetSkinnedPrimHoleIndices(skinnedPrim, skinnedPrimCachePath);
+    TfToken orientation = 
+        _GetSkinnedPrimOrientation(skinnedPrim, skinnedPrimCachePath);
+    return _TriangulateFaceVarying<VtVec3fArray, HdTypeFloatVec3>(
+        faceVertexCounts, faceVertexIndices, holeIndices, orientation, normals);
+}
+
+
+VtIntArray
+UsdSkelImagingSkeletonAdapter::_TriangulateFaceVaryingIndices(
+    const UsdPrim& skinnedPrim,
+    const SdfPath& skinnedPrimCachePath,
+    UsdTimeCode time,
+    const VtIntArray& indices) const
+{
+    VtIntArray faceVertexCounts = 
+        _GetSkinnedPrimFaceVertexCounts(skinnedPrim, skinnedPrimCachePath, time);
+    VtIntArray holeIndices = 
+        _GetSkinnedPrimHoleIndices(skinnedPrim, skinnedPrimCachePath);
+    TfToken orientation = 
+        _GetSkinnedPrimOrientation(skinnedPrim, skinnedPrimCachePath);
+    return _TriangulateFaceVarying<VtIntArray, HdTypeInt32>(
+        faceVertexCounts, indices, holeIndices, orientation, indices);
 }
 
 

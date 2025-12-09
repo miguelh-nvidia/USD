@@ -348,6 +348,28 @@ private:
                                        const SdfPath& skinnedPrimCachePath,
                                        UsdTimeCode time) const;
 
+    VtIntArray _GetSkinnedPrimFaceVertexCounts(const UsdPrim& skinnedPrim,
+                                       const SdfPath& skinnedPrimCachePath,
+                                       UsdTimeCode time) const;
+
+    TfToken _GetSkinnedPrimOrientation(const UsdPrim& skinnedPrim,
+                                       const SdfPath& skinnedPrimCachePath) const;
+
+    VtIntArray _GetSkinnedPrimHoleIndices(const UsdPrim& skinnedPrim,
+                                          const SdfPath& skinnedPrimCachePath) const;
+
+    VtVec3fArray _TriangulateFaceVaryingNormals(
+                                       const UsdPrim& skinnedPrim,
+                                       const SdfPath& skinnedPrimCachePath,
+                                       UsdTimeCode time,
+                                       const VtVec3fArray& normals) const;
+
+    VtIntArray _TriangulateFaceVaryingIndices(
+                                       const UsdPrim& skinnedPrim,
+                                       const SdfPath& skinnedPrimCachePath,
+                                       UsdTimeCode time,
+                                       const VtIntArray& indices) const;
+
     SdfPath _GetSkinningComputationPath(const SdfPath& skinnedPrimPath, ComputationType computationType) const;
 
     SdfPath _GetSkinningInputAggregatorComputationPath(const SdfPath& skinnedPrimPath, ComputationType computationType) const;

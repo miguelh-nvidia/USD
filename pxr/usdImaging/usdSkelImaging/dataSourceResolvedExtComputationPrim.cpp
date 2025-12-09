@@ -24,6 +24,7 @@
 #include "pxr/imaging/hd/meshUtil.h"
 #include "pxr/imaging/hd/retainedDataSource.h"
 #include "pxr/imaging/hd/tokens.h"
+
 #include "pxr/imaging/pxOsd/tokens.h"
 
 #include "pxr/base/gf/dualQuatf.h"
